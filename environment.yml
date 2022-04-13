@@ -10,4 +10,5 @@ dependencies:
   - matplotlib
   - pre-commit
   - gym
-  - pygame
+  - pip:
+      - pygame
