@@ -1,0 +1,11 @@
+name: baba-ai
+channels:
+  - anaconda
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - pandas
+  - tensorflow
+  - matplotlib
+  - pre-commit
