@@ -9,3 +9,5 @@ dependencies:
   - tensorflow
   - matplotlib
   - pre-commit
+  - gym
+  - pygame
