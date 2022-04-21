@@ -13,6 +13,7 @@ git submodule update --init --recursive
 
 ```
 conda env create --file environment.yml
+conda activate baba-ai
 pre-commit install
 cd baba-is-auto && pip install -U .
 ```
