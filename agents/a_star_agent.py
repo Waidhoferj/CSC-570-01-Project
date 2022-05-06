@@ -1,6 +1,7 @@
 import random
 import sys
 from time import sleep
+
 sys.path.append("../baba-is-auto/Extensions/BabaRL/baba-babaisyou-v0")
 import environment
 import pdb
@@ -8,7 +9,7 @@ import pdb
 import heapq
 
 import rendering
-
+import pdb
 import pyBaba
 import numpy as np
 import gym
@@ -16,30 +17,36 @@ import random
 from typing import List
 
 
-
-
-
 class AStarAgent:
-    
-
     def __init__(self):
-        self.moves = [] # the final set of most optimal moves
-        self.frontier = [()] # Priority queue of what move to take next (predicted_cost, env, moves_taken)
+        self.moves = []  # the final set of most optimal moves
+        self.frontier = [
+            ()
+        ]  # Priority queue of what move to take next (predicted_cost, env, moves_taken)
+        self.best_solution = (np.inf, [])
 
-
-
-    
-    def heuristic(self, env:gym.Env) -> int:
+    # combine different heuristics such as being me a goal or reaching a goal
+    def heuristic(self, env: gym.Env) -> int:
         positions = self.get_your_positions(env)
-        goals = self.get_goal_positions(env)
-        avg_goal = goals.mean(axis=1)
-        heuristics = []
-        for pos_group in positions:
-            avg_pos = pos_group.mean(axis=1)
-            heuristics.append(sum(abs(avg_pos - avg_goal)))
-        return heuristics
+        goal_positions = self.get_goal_positions(env)
 
+        # Manhattan distance
+        min_dist = min(
+            np.sum(np.abs(goal_positions - pos), axis=1).min() for pos in positions
+        )
+        # pdb.set_trace()
+        return min_dist
 
+    def backtrack(self, win_state):
+        moves = []
+        state = win_state
+        while state is not None:
+            parent = state[5]
+            action = state[4]
+            moves.append(action)
+            state = parent
+        # ignore the first element: None added in the beginning of simulation
+        return list(reversed(moves))[1:]
 
     def simulate(self, env: gym.Env) -> bool:
         """
@@ -50,52 +57,92 @@ class AStarAgent:
             Whether the environment is at a final state
         """
         done = False
-        self.frontier = [(1, env, 0)]
-        while not done:
-            (predicted_cost, env, moves_taken) = heapq.heappop(self.frontier)
+        # to break the tie of h
+        counter = 0
+        heuristic = self.heuristic(env)
+        # predicted_cost, moves_taken, counter, environment, action, parent
+        self.frontier = [(heuristic, 0, counter, env, None, None)]
+        while len(self.frontier) > 0:
+            state = heapq.heappop(self.frontier)
+            predicted_cost, moves_taken, _, env, _, _ = state
             # TODO: we need to know where we have already visited... Possibly set of tuples
-            heuristics = self.heuristic(env)
-            moves_taken +=1
-            for h, action in zip(heuristics, env.action_space):
-                predicted_cost = h + moves_taken
-                possible_env = env.copy()
-                _,_, done, _ = possible_env.step(action)
-                # TODO: Something when done?
-                entry = (predicted_cost, possible_env, moves_taken)
-                heapq.heappush(entry)
+            moves_taken += 1
+            for action in env.action_space:
+                counter += 1
 
+                copied_game = env.copy()
+                possible_env = gym.make("baba-babaisyou-v0")
+                possible_env.reset()
+                possible_env.setGame(copied_game)
+
+                _, _, done, _ = possible_env.step(action)
+
+                h = self.heuristic(possible_env)
+
+                predicted_cost = h + moves_taken
+                # Prune useless paths
+                if predicted_cost > self.best_solution[0]:
+                    continue
+
+                entry = (
+                    predicted_cost,
+                    moves_taken,
+                    counter,
+                    possible_env,
+                    action,
+                    state,
+                )
+
+                if done:
+                    # if we found the goal
+                    if h == 0:
+                        actions = self.backtrack(entry)
+                        cost = len(actions)
+                        prev_cost = self.best_solution[0]
+                        if cost < prev_cost:
+                            self.best_solution = (cost, actions)
+                    continue
+
+                heapq.heappush(self.frontier, entry)
+
+        print(self.best_solution)
 
     def step(self, env: gym.Env):
-        action = self.moves.remove(0)
+        action = self.best_solution[1].pop(0)
+        print(action)
         _, _, done, _ = env.step(action)
         return done
-    
+
     def get_your_positions(self, env: gym.Env) -> List[np.array]:
         positions = env.game.GetMap().GetPositions(env.game.GetPlayerIcon())
         positions = [np.array(p) for p in positions]
         return positions
 
-    def get_goal_positions(self, env:gym.Env) -> List[np.array]:
+    def get_goal_positions(self, env: gym.Env) -> np.array:
         rule_manager = env.game.GetRuleManager()
-        type = rule_manager.GetRules(pyBaba.WIN); 
+        win_rules = rule_manager.GetRules(pyBaba.ObjectType.WIN)
+
         convert = pyBaba.ConvertTextToIcon
-        win_positions =[]
+        win_positions = []
         game_map = env.game.GetMap()
 
         map_height = game_map.GetHeight()
         map_width = game_map.GetWidth()
-        for y in range(map_height): 
-            for x in range(map_width): 
-                if game_map.At(x,y).HasType(convert(type)):
-                    win_positions.append((x,y))
+        for y in range(map_height):
+            for x in range(map_width):
+                for win_rule in win_rules:
 
-        return win_positions
-        
+                    win_rule_type = win_rule.GetObjects()[0].GetTypes()[0]
+
+                    if game_map.At(x, y).HasType(convert(win_rule_type)):
+                        win_positions.append([x, y])
+
+        return np.array(win_positions)
 
 
-if __name__ == '__main__':
-    env = gym.make('baba-babaisyou-v0')
-    simulation_gym = gym.make('baba-babaisyou-v0')
+if __name__ == "__main__":
+    env = gym.make("baba-babaisyou-v0")
+    simulation_gym = gym.make("baba-babaisyou-v0")
     state = env.reset().reshape(1, -1, 9, 11)
     moves = 40
     done = False
