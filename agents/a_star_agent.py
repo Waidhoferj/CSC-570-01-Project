@@ -15,6 +15,7 @@ import numpy as np
 import gym
 import random
 from typing import List
+import time
 
 
 class AStarAgent:
@@ -48,6 +49,14 @@ class AStarAgent:
         # ignore the first element: None added in the beginning of simulation
         return list(reversed(moves))[1:]
 
+    def get_env_game_state(self, env):
+        game_play_state = env.game.GetPlayState()
+        game_objects = env.game.GetMap().GetObjects()
+        game_rules = env.game.GetRuleManager().GetPropertyRules()
+        game_player_icon = env.game.GetPlayerIcon()
+
+        return (game_play_state, game_objects, game_rules, game_player_icon)
+
     def simulate(self, env: gym.Env) -> bool:
         """
         Makes a move in the environment
@@ -62,10 +71,21 @@ class AStarAgent:
         heuristic = self.heuristic(env)
         # predicted_cost, moves_taken, counter, environment, action, parent
         self.frontier = [(heuristic, 0, counter, env, None, None)]
+
+        visited = []
+
         while len(self.frontier) > 0:
             state = heapq.heappop(self.frontier)
             predicted_cost, moves_taken, _, env, _, _ = state
-            # TODO: we need to know where we have already visited... Possibly set of tuples
+
+            # Check if we have already visited
+            env_game_state = self.get_env_game_state(env)
+
+            if env_game_state in visited:
+                continue
+
+            visited.append(env_game_state)
+
             moves_taken += 1
             for action in env.action_space:
                 counter += 1
@@ -80,6 +100,7 @@ class AStarAgent:
                 h = self.heuristic(possible_env)
 
                 predicted_cost = h + moves_taken
+
                 # Prune useless paths
                 if predicted_cost > self.best_solution[0]:
                     continue
@@ -96,10 +117,10 @@ class AStarAgent:
                 if done:
                     # if we found the goal
                     if h == 0:
-                        actions = self.backtrack(entry)
-                        cost = len(actions)
+                        cost = predicted_cost
                         prev_cost = self.best_solution[0]
                         if cost < prev_cost:
+                            actions = self.backtrack(entry)
                             self.best_solution = (cost, actions)
                     continue
 
@@ -142,12 +163,15 @@ class AStarAgent:
 
 if __name__ == "__main__":
     env = gym.make("baba-babaisyou-v0")
-    simulation_gym = gym.make("baba-babaisyou-v0")
     state = env.reset().reshape(1, -1, 9, 11)
     moves = 40
     done = False
     agent = AStarAgent()
-    agent.simulate(simulation_gym)
+
+    start_time = time.time()
+    agent.simulate(env)
+    print(f"Total simulation time: {time.time() - start_time}s")
+
     while not done:
         done = agent.step(env)
         env.render()
