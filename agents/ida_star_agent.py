@@ -19,13 +19,9 @@ from typing import List
 import time
 
 
-class AStarAgent:
+class IDAStarAgent:
     def __init__(self):
-        self.moves = []  # the final set of most optimal moves
-        self.frontier = [
-            ()
-        ]  # Priority queue of what move to take next (predicted_cost, env, moves_taken)
-        self.best_solution = (np.inf, [])
+        self.optimal_moves = []  # the final set of most optimal moves
 
     # combine different heuristics such as being me a goal or reaching a goal
     def heuristic(self, env: gym.Env) -> int:
@@ -38,17 +34,6 @@ class AStarAgent:
         )
         # pdb.set_trace()
         return min_dist
-
-    def backtrack(self, win_state):
-        moves = []
-        state = win_state
-        while state is not None:
-            parent = state[5]
-            action = state[4]
-            moves.append(action)
-            state = parent
-        # ignore the first element: None added in the beginning of simulation
-        return list(reversed(moves))[1:]
 
     def get_env_game_state(self, env):
         game_play_state = env.game.GetPlayState()
@@ -66,71 +51,80 @@ class AStarAgent:
         Returns:
             Whether the environment is at a final state
         """
-        done = False
-        # to break the tie of h
-        counter = 0
-        heuristic = self.heuristic(env)
-        # predicted_cost, moves_taken, counter, environment, action, parent
-        self.frontier = [(heuristic, 0, counter, env, None, None)]
 
+        threshold = self.heuristic(env)
+
+        moves_taken = 0
         visited = []
+        optimal_moves = []
 
-        while len(self.frontier) > 0:
-            state = heapq.heappop(self.frontier)
-            predicted_cost, moves_taken, _, env, _, _ = state
+        while True:
+            temp = self.search(env, moves_taken, threshold, optimal_moves, visited)
 
-            # Check if we have already visited
-            env_game_state = self.get_env_game_state(env)
+            # when the goal is found
+            if temp == -1:
+                self.optimal_moves = optimal_moves
+                print(self.optimal_moves)
+                return
 
-            if env_game_state in visited:
-                continue
+            # can't find the optimal moves
+            if temp == np.inf:
+                return
 
-            visited.append(env_game_state)
+            threshold = temp
 
-            moves_taken += 1
-            for action in env.action_space:
-                counter += 1
+    def search(self, env, g_score, threshold, optimal_moves, visited):
+        h = self.heuristic(env)
 
-                copied_game = env.copy()
-                possible_env = gym.make(env_name)
-                possible_env.reset()
-                possible_env.setGame(copied_game)
+        predicted_cost = g_score + h
 
-                _, _, done, _ = possible_env.step(action)
+        if predicted_cost > threshold:
+            return predicted_cost
 
+        # if the current position is goal
+        if h == 0:
+            return -1
+
+        min = np.inf
+
+        for action in env.action_space:
+            copied_game = env.copy()
+            possible_env = gym.make(env_name)
+            possible_env.reset()
+            possible_env.setGame(copied_game)
+
+            _, _, done, _ = possible_env.step(action)
+
+            if done:
                 h = self.heuristic(possible_env)
 
-                predicted_cost = h + moves_taken
+                # distance to flag is 0
+                if h == 0:
+                    optimal_moves.append(action)
+                    return -1
+                else:
+                    return min
 
-                # Prune useless paths
-                if predicted_cost > self.best_solution[0]:
-                    continue
+            game_state = self.get_env_game_state(possible_env)
 
-                entry = (
-                    predicted_cost,
-                    moves_taken,
-                    counter,
-                    possible_env,
-                    action,
-                    state,
+            if game_state not in visited:
+                visited.append(game_state)
+                optimal_moves.append(action)
+
+                temp = self.search(
+                    possible_env, g_score + 1, threshold, optimal_moves, visited
                 )
 
-                if done:
-                    # if we found the goal
-                    if h == 0:
-                        cost = predicted_cost
-                        prev_cost = self.best_solution[0]
-                        if cost < prev_cost:
-                            actions = self.backtrack(entry)
-                            self.best_solution = (cost, actions)
-                    continue
+                if temp != -1:
+                    optimal_moves.pop()
+                    visited.pop()
 
-                heapq.heappush(self.frontier, entry)
-
-        print(self.best_solution)
+                if temp < min:
+                    min = temp
+        return min
 
     def step(self, env: gym.Env):
-        action = self.best_solution[1].pop(0)
+        action = self.optimal_moves.pop(0)
         print(action)
         _, _, done, _ = env.step(action)
         return done
@@ -168,7 +162,7 @@ if __name__ == "__main__":
     # state = env.reset().reshape(1, -1, 9, 11)
     moves = 40
     done = False
-    agent = AStarAgent()
+    agent = IDAStarAgent()
 
     start_time = time.time()
     agent.simulate(env)

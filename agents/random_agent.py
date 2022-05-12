@@ -31,7 +31,8 @@ class RandomAgent:
 
 if __name__ == "__main__":
     env = gym.make(env_name)
-    state = env.reset().reshape(1, -1, 9, 11)
+    env.reset()
+    # state = env.reset().reshape(1, -1, 9, 11)
     moves = 40
     done = False
     agent = RandomAgent()
