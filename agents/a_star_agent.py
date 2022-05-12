@@ -2,7 +2,8 @@ import random
 import sys
 from time import sleep
 
-sys.path.append("../baba-is-auto/Extensions/BabaRL/baba-babaisyou-v0")
+env_name = "baba-volcano-v0"
+sys.path.append("../baba-is-auto/Extensions/BabaRL/" + env_name)
 import environment
 import pdb
 
@@ -91,7 +92,7 @@ class AStarAgent:
                 counter += 1
 
                 copied_game = env.copy()
-                possible_env = gym.make("baba-babaisyou-v0")
+                possible_env = gym.make(env_name)
                 possible_env.reset()
                 possible_env.setGame(copied_game)
 
@@ -162,7 +163,7 @@ class AStarAgent:
 
 
 if __name__ == "__main__":
-    env = gym.make("baba-babaisyou-v0")
+    env = gym.make(env_name)
     state = env.reset().reshape(1, -1, 9, 11)
     moves = 40
     done = False

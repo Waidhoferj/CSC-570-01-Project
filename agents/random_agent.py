@@ -1,7 +1,10 @@
 import random
 import sys
 from time import sleep
-sys.path.append("../baba-is-auto/Extensions/BabaRL/baba-babaisyou-v0")
+
+env_name = "baba-volcano-v0"
+
+sys.path.append("../baba-is-auto/Extensions/BabaRL/" + env_name)
 import environment
 
 import rendering
@@ -12,11 +15,7 @@ import gym
 import random
 
 
-
-
-
 class RandomAgent:
-    
     def step(self, env: gym.Env) -> bool:
         """
         Makes a move in the environment
@@ -28,11 +27,10 @@ class RandomAgent:
         action = random.choice(env.action_space)
         _, _, done, _ = env.step(action)
         return done
-        
 
 
-if __name__ == '__main__':
-    env = gym.make('baba-babaisyou-v0')
+if __name__ == "__main__":
+    env = gym.make(env_name)
     state = env.reset().reshape(1, -1, 9, 11)
     moves = 40
     done = False
