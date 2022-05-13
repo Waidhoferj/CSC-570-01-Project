@@ -1,0 +1,144 @@
+from argparse import ArgumentParser
+from enum import Enum, auto
+from typing import List
+from bidict import bidict
+import os
+import re
+import json
+
+def get_baba_is_auto_game_enum_elements()-> List[str]:
+    enums_dir = ["baba-is-auto","Includes", "baba-is-auto", "Enums"]
+    files = ["NounType.def","OpType.def", "PropertyType.def", "IconType.def"]
+    elements = []
+    for filename in files:
+        path = os.path.join(*enums_dir, filename)
+        with open(path, "r") as f:
+            for line in f.readlines():
+                el = re.search(r"X\((.*)\)", line).groups()[0]
+                elements.append(el)
+    return elements
+
+
+def create_tile_enum():
+    i = 0
+    elements = {}
+    def inc():
+        nonlocal i
+        v = i
+        i +=1
+        return v
+
+    elements.update({el : index for index, el in enumerate(get_baba_is_auto_game_enum_elements())})
+    i = len(elements)
+    elements.update({"FLOOR": inc(), "ICON_FLOOR": inc(), "GOOP": inc(), "ICON_GOOP": inc(), "BORDER": inc(), "KILL": inc()})
+            
+    return Enum('Tile', elements)
+
+Tile = create_tile_enum()
+
+
+LevelMap = List[List[Tile]]
+
+baba_is_auto_map = bidict({
+    Tile(i) : i for i in range(len(get_baba_is_auto_game_enum_elements()))
+})
+
+keke_map = bidict({
+Tile.BORDER : '_',
+Tile.ICON_EMPTY : ' ',
+Tile.ICON_BABA : 'b',
+Tile.BABA : 'B',
+Tile.IS : '1',
+Tile.YOU : '2',
+Tile.WIN : '3',
+Tile.ICON_SKULL : 's',
+Tile.SKULL : 'S',
+Tile.ICON_FLAG : 'f',
+Tile.FLAG : 'F',
+Tile.ICON_FLOOR : 'o',
+Tile.FLOOR : 'O',
+Tile.GRASS : 'a',
+Tile.ICON_GRASS : 'A',
+Tile.KILL : '4',
+Tile.ICON_LAVA : 'l',
+Tile.LAVA : 'L',
+Tile.PUSH : '5',
+Tile.ICON_ROCK : 'r',
+Tile.ROCK : 'R',
+Tile.STOP : '6',
+Tile.ICON_WALL : 'w',
+Tile.WALL : 'W',
+Tile.MOVE : '7',
+Tile.HOT : '8',
+Tile.MELT : '9',
+Tile.ICON_KEKE : 'k',
+Tile.KEKE : 'K',
+Tile.ICON_GOOP : 'g',
+Tile.GOOP : 'G',
+Tile.SINK : '0',
+Tile.ICON_LOVE : 'v',
+Tile.LOVE : 'V',
+})
+
+
+
+def read_keke(filename:str) -> List[LevelMap]:
+        levels = []
+        with open(filename, "r") as f:
+            keke_levels = json.load(f)["levels"]
+            for keke_level in keke_levels:
+                level = []
+                for line in keke_level["ascii"].split("\n"):
+                    level.append([])
+                    for c in line:
+                        if c == ".": c = " " # dobule mapping on empties
+                        level[-1].append(keke_map.inverse[c])
+                levels.append(level)
+                
+        return levels
+                    
+def write_keke(filename:str, level:LevelMap):
+    converted_level = ["".join([keke_map[tile] for tile in row]) for row in level]
+    with open(filename, "w") as f:
+        f.writelines(converted_level)
+            
+
+def read_baba_is_auto(filename:str) -> LevelMap:
+        pass
+
+def write_baba_is_auto(filename:str, levels: List[LevelMap]):
+        for i, level in enumerate(levels):
+            lines = []
+            lines.append(f"{len(level)} {len(level[0])}")
+            for row in level:
+                for tile in row:
+                    
+            converted_level = ["\t".join([str(baba_is_auto_map[tile]) for tile in row]) for row in level]
+            lines.extend(converted_level)
+            with open(i + filename, "w") as f:
+                f.writelines(lines)
+
+converters = {
+    "keke": (read_keke, write_keke),
+    "baba-is-auto": (read_baba_is_auto, write_baba_is_auto),
+}
+
+def convert(src:str,dst:str,src_format:str,dst_format:str):
+    reader, _ = converters[src_format]
+    _, writer = converters[dst_format]
+    levels = reader(src)
+    writer(dst, levels)
+
+
+
+if __name__ == "__main__":
+    # parser = ArgumentParser()
+    # parser.add_argument("source", help="File with level information")
+    # parser.add_argument("dest", help="Output file location and name")
+    # parser.add_argument("--source-format", default="keke")
+    # parser.add_argument("--dest-format", default="baba-is-auto")
+
+    # args = parser.parse_args()
+    convert("keke_level.json", "out.txt", "keke", "baba-is-auto")
+
+
