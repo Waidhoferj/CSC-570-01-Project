@@ -2,10 +2,10 @@ import random
 import sys
 from time import sleep
 
-env_name = "baba-volcano-v0"
-
-sys.path.append("../baba-is-auto/Extensions/BabaRL/" + env_name)
-import environment
+env_name = "test-map-v1"
+sys.path.append("..")
+sys.path.append("../baba-is-auto/Extensions/BabaRL/baba-babaisyou-v0")
+from environment import BabaEnv
 
 import rendering
 
@@ -30,7 +30,8 @@ class RandomAgent:
 
 
 if __name__ == "__main__":
-    env = gym.make(env_name)
+    env_template = BabaEnv(env_name, "../levels/out/0.txt")
+    env = gym.make("../levels/out/0.txt")
     env.reset()
     # state = env.reset().reshape(1, -1, 9, 11)
     moves = 40

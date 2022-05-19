@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from enum import Enum, auto
+import shutil
 from typing import List
 from bidict import bidict
 import os
@@ -107,16 +108,25 @@ def read_baba_is_auto(filename:str) -> LevelMap:
         pass
 
 def write_baba_is_auto(filename:str, levels: List[LevelMap]):
+        path, filename = os.path.split(filename)
+        file, ext =  os.path.splitext(filename)
+        folder = os.path.join(path, file)
+        shutil.rmtree(folder, ignore_errors=True)
+        os.makedirs(folder)
+
+        def get_tile(tile: Tile):
+            if tile == Tile.BORDER:
+                tile = Tile.ICON_WALL
+            return str(baba_is_auto_map.get(tile, baba_is_auto_map[Tile.EMPTY]))
+
         for i, level in enumerate(levels):
             lines = []
-            lines.append(f"{len(level)} {len(level[0])}")
-            for row in level:
-                for tile in row:
-                    
-            converted_level = ["\t".join([str(baba_is_auto_map[tile]) for tile in row]) for row in level]
+            height, width = len(level),len(level[0])
+            lines.append(f"{width} {height}")
+            converted_level = [" ".join(map(get_tile,row)) for row in level]
             lines.extend(converted_level)
-            with open(i + filename, "w") as f:
-                f.writelines(lines)
+            with open(os.path.join(path, file, f"{i}{ext}"), "w") as f:
+                f.writelines(line + "\n" for line in lines)
 
 converters = {
     "keke": (read_keke, write_keke),
@@ -139,6 +149,6 @@ if __name__ == "__main__":
     # parser.add_argument("--dest-format", default="baba-is-auto")
 
     # args = parser.parse_args()
-    convert("keke_level.json", "out.txt", "keke", "baba-is-auto")
+    convert("keke_level.json", "levels/out.txt", "keke", "baba-is-auto")
 
 

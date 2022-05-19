@@ -2,3 +2,7 @@
 data
 *.pyc
 __pycache__
+.vscode/settings.json
+.gitignore
+
+levels
