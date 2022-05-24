@@ -13,11 +13,13 @@ class SpriteLoader:
                             pyBaba.ObjectType.ICON_ANNI: 'ANNI',
                             pyBaba.ObjectType.ICON_WATER: 'WATER',
                             pyBaba.ObjectType.ICON_FIRE: 'FIRE',
+                            pyBaba.ObjectType.ICON_SKULL: 'SKULL',
                             pyBaba.ObjectType.ICON_DUST: 'DUST',
                             pyBaba.ObjectType.ICON_WALL: 'WALL',
                             pyBaba.ObjectType.ICON_ROCK: 'ROCK',
                             pyBaba.ObjectType.ICON_TILE: 'TILE',
                             pyBaba.ObjectType.ICON_TYPE: 'TYPE_replacement',
+                            pyBaba.ObjectType.ICON_KEKE: 'KEKE',
                             pyBaba.ObjectType.ICON_LAVA: 'LAVA'}
 
         for i in self.icon_images:
@@ -39,9 +41,11 @@ class SpriteLoader:
                             pyBaba.ObjectType.STOP: 'STOP',
                             pyBaba.ObjectType.ROCK: 'ROCK',
                             pyBaba.ObjectType.PUSH: 'PUSH',
+                            pyBaba.ObjectType.SKULL: 'SKULL',
                             pyBaba.ObjectType.LAVA: 'LAVA',
                             pyBaba.ObjectType.MELT: 'MELT',
                             pyBaba.ObjectType.ANNI: 'ANNI',
+                            pyBaba.ObjectType.KEKE: 'KEKE',
                             pyBaba.ObjectType.WATER: 'WATER',
                             pyBaba.ObjectType.MOVE: 'MOVE',
                             pyBaba.ObjectType.HOT: 'HOT'}

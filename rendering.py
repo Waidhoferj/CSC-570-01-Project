@@ -9,7 +9,7 @@ COLOR_BACKGROUND = pygame.Color(0, 0, 0)
 class Renderer():
     def __init__(self, game, enable_render=True):
         pygame.init()
-        pygame.display.set_caption('OpenAI Gym - baba-volcano-v0')
+        pygame.display.set_caption('Baba is Auto')
 
         self.game = game
         self.game_over = False
@@ -49,6 +49,7 @@ class Renderer():
                 self.draw(map)
 
                 if mode == 'human':
+                    self.screen.fill(((0,0,0)))
                     self.draw(map)
                     pygame.display.flip()
 

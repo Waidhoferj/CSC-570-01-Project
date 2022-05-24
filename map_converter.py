@@ -100,13 +100,19 @@ def read_keke(filename:str) -> List[LevelMap]:
         return levels
                     
 def write_keke(filename:str, level:LevelMap):
-    converted_level = ["".join([keke_map[tile] for tile in row]) for row in level]
+    converted_level = "\n".join(["".join([keke_map[tile] for tile in row]) for row in level])
+    output = {
+        "levels": [{"id": "", "name": "", "author": "", "ascii": converted_level, "solution": ""}]
+    }
     with open(filename, "w") as f:
-        f.writelines(converted_level)
+       json.dump(output, f)
             
 
 def read_baba_is_auto(filename:str) -> LevelMap:
-        pass
+        with open(filename, "r") as f:
+            level = []
+            level = [[baba_is_auto_map.inverse[int(num)]for num in line.split(" ")] for line in f.readlines()[1:]]
+        return level
 
 def write_baba_is_auto(filename:str, levels: List[LevelMap]):
         path, filename = os.path.split(filename)
@@ -143,13 +149,15 @@ def convert(src:str,dst:str,src_format:str,dst_format:str):
 
 
 if __name__ == "__main__":
-    # parser = ArgumentParser()
-    # parser.add_argument("source", help="File with level information")
-    # parser.add_argument("dest", help="Output file location and name")
-    # parser.add_argument("--source-format", default="keke")
-    # parser.add_argument("--dest-format", default="baba-is-auto")
+    parser = ArgumentParser()
+    parser.add_argument("source", help="File with level information")
+    parser.add_argument("dest", help="Output file location and name")
+    parser.add_argument("--source-format", default="keke")
+    parser.add_argument("--dest-format", default="baba-is-auto")
 
-    # args = parser.parse_args()
-    convert("keke_level.json", "levels/out.txt", "keke", "baba-is-auto")
+    args = parser.parse_args()
+
+    # Example: python map_converter.py keke_level.json levels/out.txt
+    convert(args.source, args.dest, args.source_format, args.dest_format)
 
 

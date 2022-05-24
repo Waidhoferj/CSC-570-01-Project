@@ -30,18 +30,16 @@ class RandomAgent:
 
 
 if __name__ == "__main__":
-    env_template = register_baba_env(env_name, path="../levels/out/0.txt")
+    env_template = register_baba_env(env_name, path=f"../levels/out/0.txt")
     env = gym.make(env_name)
     env.reset()
-    # state = env.reset().reshape(1, -1, 9, 11)
-    env.render()
-    sleep(5)
     moves = 40
     done = False
-    # agent = RandomAgent()
-    # for i in range(moves):
-    #     if done:
-    #         break
-    #     agent.step(env)
-    #     env.render()
-    #     sleep(0.2)
+    agent = RandomAgent()
+    env.render()
+    for i in range(moves):
+        if done:
+            break
+        agent.step(env)
+        # env.render()
+        sleep(0.2)
