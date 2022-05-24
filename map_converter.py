@@ -6,6 +6,7 @@ from bidict import bidict
 import os
 import re
 import json
+import pyBaba
 
 def get_baba_is_auto_game_enum_elements()-> List[str]:
     enums_dir = ["baba-is-auto","Includes", "baba-is-auto", "Enums"]
@@ -28,8 +29,8 @@ def create_tile_enum():
         v = i
         i +=1
         return v
-
-    elements.update({el : index for index, el in enumerate(get_baba_is_auto_game_enum_elements())})
+    auto_enums = [getattr(pyBaba.ObjectType, k) for k in dir(pyBaba.ObjectType) if not k.startswith("_") and not k.islower()]
+    elements.update({str(el).split(".")[1]: el.value for el in auto_enums})
     i = len(elements)
     elements.update({"FLOOR": inc(), "ICON_FLOOR": inc(), "GOOP": inc(), "ICON_GOOP": inc(), "BORDER": inc(), "KILL": inc()})
             
@@ -46,7 +47,7 @@ baba_is_auto_map = bidict({
 
 keke_map = bidict({
 Tile.BORDER : '_',
-Tile.ICON_EMPTY : ' ',
+Tile.ICON_EMPTY : '.',
 Tile.ICON_BABA : 'b',
 Tile.BABA : 'B',
 Tile.IS : '1',
@@ -92,7 +93,7 @@ def read_keke(filename:str) -> List[LevelMap]:
                 for line in keke_level["ascii"].split("\n"):
                     level.append([])
                     for c in line:
-                        if c == ".": c = " " # dobule mapping on empties
+                        if c == " ": c = "." # dobule mapping on empties
                         level[-1].append(keke_map.inverse[c])
                 levels.append(level)
                 
@@ -117,7 +118,7 @@ def write_baba_is_auto(filename:str, levels: List[LevelMap]):
         def get_tile(tile: Tile):
             if tile == Tile.BORDER:
                 tile = Tile.ICON_WALL
-            return str(baba_is_auto_map.get(tile, baba_is_auto_map[Tile.EMPTY]))
+            return str(baba_is_auto_map.get(tile, baba_is_auto_map[Tile.ICON_EMPTY]))
 
         for i, level in enumerate(levels):
             lines = []

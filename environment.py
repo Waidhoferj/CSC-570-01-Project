@@ -2,8 +2,6 @@ import gym
 from gym.utils import seeding
 from gym.envs.registration import register
 import numpy as np
-import sys
-sys.path.append("../baba-is-auto/Extensions/BabaRL/baba-volcano-v0")
 
 import pyBaba
 import rendering
@@ -11,20 +9,17 @@ import rendering
 # Registration check
 registered_envs = set()
 
+def register_baba_env(name:str, path:str):
+    if name not in registered_envs:
+        registered_envs.add(name)
+        register(id=name, entry_point='environment:BabaEnv', max_episode_steps=200, nondeterministic=True, kwargs={"path": path})
+
 
 class BabaEnv(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, name:str, path:str, enable_render=True):
+    def __init__(self, path:str="", enable_render=True):
         super(BabaEnv, self).__init__()
-        if name not in registered_envs:
-            registered_envs.add(name)
-            register(
-                id=name,
-                entry_point='environment:BabaEnv',
-                max_episode_steps=200,
-                nondeterministic=True
-            )
         self.path = path
         self.game = pyBaba.Game(self.path)
         self.renderer = rendering.Renderer(self.game)

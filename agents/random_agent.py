@@ -4,8 +4,8 @@ from time import sleep
 
 env_name = "test-map-v1"
 sys.path.append("..")
+from environment import register_baba_env
 sys.path.append("../baba-is-auto/Extensions/BabaRL/baba-babaisyou-v0")
-from environment import BabaEnv
 
 import rendering
 
@@ -30,16 +30,18 @@ class RandomAgent:
 
 
 if __name__ == "__main__":
-    env_template = BabaEnv(env_name, "../levels/out/0.txt")
-    env = gym.make("../levels/out/0.txt")
+    env_template = register_baba_env(env_name, path="../levels/out/0.txt")
+    env = gym.make(env_name)
     env.reset()
     # state = env.reset().reshape(1, -1, 9, 11)
+    env.render()
+    sleep(5)
     moves = 40
     done = False
-    agent = RandomAgent()
-    for i in range(moves):
-        if done:
-            break
-        agent.step(env)
-        env.render()
-        sleep(0.2)
+    # agent = RandomAgent()
+    # for i in range(moves):
+    #     if done:
+    #         break
+    #     agent.step(env)
+    #     env.render()
+    #     sleep(0.2)
