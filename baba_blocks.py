@@ -68,7 +68,7 @@ class BabaBlock(Enum):
     VIOLET = 63
     WALL = 64
     WATER = 65
-    OP = -
+    OP = "-"
     IS = 67
     HAS = 68
     MAKE = 69
@@ -78,7 +78,7 @@ class BabaBlock(Enum):
     NEAR = 73
     FACING = 74
     LONELY = 75
-    PROP = -
+    PROP = "-"
     YOU = 77
     STOP = 78
     PUSH = 79
