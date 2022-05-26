@@ -22,7 +22,7 @@ class RandomAgent:
         Returns:
             Whether the environment is at a final state
         """
-        action = env.action_space.sample()
+        action = random.choice(env.action_space)
         _, _, done, _ = env.step(action)
         return done
 

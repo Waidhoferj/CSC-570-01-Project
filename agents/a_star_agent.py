@@ -89,7 +89,7 @@ class AStarAgent:
             visited.append(env_game_state)
 
             moves_taken += 1
-            for action in range(env.action_space.n):
+            for action in env.action_space:
                 counter += 1
 
                 copied_game = env.copy()

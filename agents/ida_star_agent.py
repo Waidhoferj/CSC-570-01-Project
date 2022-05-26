@@ -198,7 +198,7 @@ class IDAStarAgent:
                     visited.add(state)
                     optimal_moves.append(action)
 
-                    env.render()
+                    # env.render()
 
                     temp = self.search(
                         env, g_score + 1, threshold, optimal_moves, visited
@@ -214,6 +214,7 @@ class IDAStarAgent:
 
                 if is_moved:
                     # backtrack
+
                     back_action = self.get_back_action(action)
                     env.step(back_action)
 
@@ -277,8 +278,7 @@ if __name__ == "__main__":
     agent.simulate(env)
     print(f"Total simulation time: {time.time() - start_time}s")
 
-    # env.render()
     while not done:
         done = agent.step(env)
-        env.render()
+        # env.render()
         sleep(0.2)

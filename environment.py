@@ -30,16 +30,16 @@ class BabaEnv(gym.Env):
 
         self.action_space = spaces.Discrete(4)
 
-        self._action_to_direction = {
-            0: pyBaba.Direction.UP,
-            1: pyBaba.Direction.DOWN,
-            2: pyBaba.Direction.LEFT,
-            3: pyBaba.Direction.RIGHT,
-        }
+        self.action_space = [
+            pyBaba.Direction.UP,
+            pyBaba.Direction.DOWN,
+            pyBaba.Direction.LEFT,
+            pyBaba.Direction.RIGHT,
+        ]
         self.observation_space = spaces.MultiBinary(self.get_obs().shape)
 
 
-        self.action_size = self.action_space.n
+        self.action_size = len(self.action_space)
 
         self.seed()
         self.reset()
@@ -56,7 +56,7 @@ class BabaEnv(gym.Env):
         return self.get_obs()
 
     def step(self, action):
-        action = action if type(action) == pyBaba.Direction else self._action_to_direction[action]
+        action = action if type(action) == pyBaba.Direction else self.action_space[action]
         self.game.MovePlayer(action)
 
         result = self.game.GetPlayState()

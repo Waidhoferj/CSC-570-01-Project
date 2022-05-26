@@ -246,7 +246,7 @@ if __name__ == '__main__':
     env.reset()
     flattened_input_shape = (np.prod(env.observation_space.shape),)
     agent = Agent(input_dims=flattened_input_shape, env=env,
-            n_actions=env.action_space.n)
+            n_actions=env.action_size)
     n_games = 100
     # uncomment this line and do a mkdir tmp && mkdir tmp/video if you want to
     # record video of the agent playing the game.
@@ -254,7 +254,7 @@ if __name__ == '__main__':
 
     best_score = env.reward_range[0]
     score_history = []
-    load_checkpoint = True
+    load_checkpoint = False
 
     if load_checkpoint:
         agent.load_models()
