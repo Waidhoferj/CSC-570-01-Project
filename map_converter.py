@@ -9,7 +9,6 @@ import json
 import pyBaba
 
 def get_baba_is_auto_game_enum_elements()-> List[str]:
-    """ """
     enums_dir = ["baba-is-auto","Includes", "baba-is-auto", "Enums"]
     files = ["NounType.def","OpType.def", "PropertyType.def", "IconType.def"]
     elements = []
