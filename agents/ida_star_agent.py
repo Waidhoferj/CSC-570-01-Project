@@ -87,11 +87,11 @@ class IDAStarAgent:
 
         min = np.inf
 
-        for action in env.action_space:
+        for action in range(env.action_space.n):
             copied_game = env.copy()
             possible_env = gym.make(env_name)
             possible_env.reset()
-            possible_env.setGame(copied_game)
+            possible_env.set_game(copied_game)
 
             _, _, done, _ = possible_env.step(action)
 
@@ -157,7 +157,7 @@ class IDAStarAgent:
 
 
 if __name__ == "__main__":
-    register_baba_env(env_name, env_path)
+    register_baba_env(env_name, env_path, enable_render=False)
     env = gym.make(env_name)
     env.reset()
     # state = env.reset().reshape(1, -1, 9, 11)
