@@ -1,3 +1,5 @@
+# Code adapted from: https://github.com/philtabor/Youtube-Code-Repository/tree/master/ReinforcementLearning/PolicyGradient/SAC/tf2
+
 import numpy as np
 import os
 import tensorflow as tf
@@ -127,13 +129,14 @@ class Agent:
         layer_sizes=[256,256],
         batch_size=128,
         reward_scale=2):
+
         self.gamma = gamma
         self.tau = tau
         self.memory = ReplayBuffer(max_replay_size, input_dims,n_actions)
         self.batch_size = batch_size
         self.n_actions = n_actions
 
-        self.actor = ActorNetwork(n_actions=n_actions, max_action=env.action_space.high)
+        self.actor = ActorNetwork(n_actions=n_actions, max_action=1)
         self.critics = [CriticNetwork(n_actions=n_actions, name=f"critic_{i}") for i in range(1,3)]
         self.value = ValueNetwork()
         self.target_value = ValueNetwork(name="target_value")
@@ -149,7 +152,7 @@ class Agent:
         state = tf.convert_to_tensor([obs])
         actions, _ = self.actor.sample_normal(state)
 
-        return actions[0]
+        return actions[0].numpy()
 
     def remember(self, state,action,reward, new_state,done):
         self.memory.store_transition(state, action, reward, new_state, done)
@@ -235,21 +238,19 @@ class Agent:
         
 
 
-
 if __name__ == '__main__':
-    env_template = register_baba_env(env_name, path=f"../levels/out/0.txt")
+    env_name = "baba_is_you-v1"
+    env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
+    env_template = register_baba_env(env_name, path=env_path, enable_render=True)
     env = gym.make(env_name)
     env.reset()
-    env = gym.make('InvertedPendulumBulletEnv-v0')
-    agent = Agent(input_dims=env.observation_space.shape, env=env,
-            n_actions=env.action_space.shape[0])
-    n_games = 5
+    flattened_input_shape = (np.prod(env.observation_space.shape),)
+    agent = Agent(input_dims=flattened_input_shape, env=env,
+            n_actions=env.action_size)
+    n_games = 100
     # uncomment this line and do a mkdir tmp && mkdir tmp/video if you want to
     # record video of the agent playing the game.
     #env = wrappers.Monitor(env, 'tmp/video', video_callable=lambda episode_id: True, force=True)
-    filename = 'inverted_pendulum.png'
-
-    figure_file = 'plots/' + filename
 
     best_score = env.reward_range[0]
     score_history = []
@@ -257,15 +258,17 @@ if __name__ == '__main__':
 
     if load_checkpoint:
         agent.load_models()
-        env.render(mode='human')
 
     for i in range(n_games):
-        observation = env.reset()
+        observation = (env.reset()).flatten()
         done = False
         score = 0
         while not done:
             action = agent.choose_action(observation)
+            action = np.argmax(action)
             observation_, reward, done, info = env.step(action)
+            observation_ = observation_.flatten()
+            env.render()
             score += reward
             agent.remember(observation, action, reward, observation_, done)
             if not load_checkpoint:
@@ -279,7 +282,7 @@ if __name__ == '__main__':
             if not load_checkpoint:
                 agent.save_models()
 
-        print('episode ', i, 'score %.1f' % score, 'avg_score %.1f' % avg_score)
+        print('episode ', i+1, 'score %.1f' % score, 'avg_score %.1f' % avg_score)
 
     
 
