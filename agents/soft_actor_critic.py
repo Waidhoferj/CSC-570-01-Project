@@ -38,6 +38,7 @@ class ReplayBuffer:
     def sample_buffer(self, batch_size):
         max_mem = min(self.mem_counter, self.mem_size)
         batch = np.random.choice(max_mem, batch_size)
+        # TODO: weighted sampling
 
         states = self.state_memory[batch]
         new_states = self.new_state_memory[batch]
@@ -254,7 +255,7 @@ if __name__ == '__main__':
 
     best_score = env.reward_range[0]
     score_history = []
-    load_checkpoint = False
+    load_checkpoint = True
 
     if load_checkpoint:
         agent.load_models()
@@ -266,14 +267,14 @@ if __name__ == '__main__':
         while not done:
             action = agent.choose_action(observation)
             action = np.argmax(action)
-            observation_, reward, done, info = env.step(action)
-            observation_ = observation_.flatten()
+            next_obs, reward, done, info = env.step(action)
+            next_obs = next_obs.flatten()
             env.render()
             score += reward
-            agent.remember(observation, action, reward, observation_, done)
+            agent.remember(observation, action, reward, next_obs, done)
             if not load_checkpoint:
                 agent.learn()
-            observation = observation_
+            observation = next_obs
         score_history.append(score)
         avg_score = np.mean(score_history[-100:])
 
