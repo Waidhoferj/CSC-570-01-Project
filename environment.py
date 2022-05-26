@@ -5,28 +5,33 @@ from gym.envs.registration import register
 import numpy as np
 
 import pyBaba
+import pygame
 import rendering
 from gym import spaces
 
 # Registration check
 registered_envs = set()
 
-def register_baba_env(name:str, path:str, enable_render=True, max_episode_steps=200):
+def register_baba_env(name:str, path:str, enable_render=True, max_episode_steps=200, user_controls=False):
     if name not in registered_envs:
         registered_envs.add(name)
-        register(id=name, entry_point='environment:BabaEnv', max_episode_steps=max_episode_steps, nondeterministic=True, kwargs={"path": path, "enable_render":enable_render})
+        register(id=name, entry_point='environment:BabaEnv', max_episode_steps=max_episode_steps, nondeterministic=True, kwargs={"path": path, "enable_render":enable_render, "user_controls":user_controls})
 
 
 class BabaEnv(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, path:str="", enable_render=True):
+    def __init__(self, path:str="", enable_render=True, user_controls=False):
         super(BabaEnv, self).__init__()
         self.path = path
         self.game = pyBaba.Game(self.path)
         self.enable_render = enable_render
+        
         if enable_render:
             self.renderer = rendering.Renderer(self.game)
+        
+        if user_controls and enable_render:
+            self.setup_user_controls()
 
         self.action_space = spaces.Discrete(4)
 
@@ -43,6 +48,19 @@ class BabaEnv(gym.Env):
 
         self.seed()
         self.reset()
+
+    def setup_user_controls(self):
+        def handle_movement(event):
+            if event.unicode == "w":
+                self.step(pyBaba.Direction.UP)
+            elif event.unicode == "a":
+                self.step(pyBaba.Direction.LEFT)
+            elif event.unicode == "s":
+                self.step(pyBaba.Direction.DOWN)
+            elif event.unicode == "d":
+                self.step(pyBaba.Direction.RIGHT)
+
+        self.renderer.on(pygame.KEYUP,handle_movement)
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)

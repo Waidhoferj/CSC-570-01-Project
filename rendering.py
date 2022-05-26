@@ -1,3 +1,4 @@
+from typing import Callable
 import pygame
 import pyBaba
 import sprites
@@ -14,6 +15,7 @@ class Renderer():
         self.game = game
         self.game_over = False
         self.enable_render = enable_render
+        self.event_callbacks = {}
 
         if self.enable_render is True:
             self.screen_size = (game.GetMap().GetWidth() * BLOCK_SIZE,
@@ -60,10 +62,20 @@ class Renderer():
             raise e
         else:
             pass
+    
+    def on(self,event: pygame.event.Event, cb:Callable[[pygame.event.Event], None]):
+        """
+        Subscribe callback to events
+        """
+        if event not in self.event_callbacks:
+            self.event_callbacks[event] = []
+        self.event_callbacks[event].append(cb)
 
     def process_event(self):
         if not self.game_over:
             for event in pygame.event.get():
+                for cb in self.event_callbacks.get(event.type,[]):
+                    cb(event)
                 if event.type == pygame.QUIT:
                     self.game_over = True
                     self.quit_game()
