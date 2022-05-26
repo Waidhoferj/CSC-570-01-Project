@@ -5,6 +5,8 @@ __pycache__
 .vscode/settings.json
 .gitignore
 
+# Baba Content
 levels
 baba_is_smart.egg-info
 checkpoints
+full_biy_LEVELS.json
