@@ -1,10 +1,11 @@
+import os
 import random
 import sys
 from time import sleep
 
 env_name = "baba-volcano-v0"
-sys.path.append("../baba-is-auto/Extensions/BabaRL/" + env_name)
-import environment
+env_path = os.path.join("baba-is-auto", "Resources", "Maps", "volcano.txt")
+from environment import register_baba_env
 import pdb
 
 import heapq
@@ -163,6 +164,7 @@ class AStarAgent:
 
 
 if __name__ == "__main__":
+    register_baba_env(env_name, env_path)
     env = gym.make(env_name)
     env.reset()
     # state = env.reset().reshape(1, -1, 9, 11)

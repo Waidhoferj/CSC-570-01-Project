@@ -14,3 +14,4 @@ dependencies:
   - bidict
   - pip:
       - pygame
+      - tensorflow-probability
