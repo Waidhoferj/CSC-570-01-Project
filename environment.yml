@@ -8,6 +8,7 @@ dependencies:
   - numpy
   - pandas
   - tensorflow
+  - torch
   - matplotlib
   - pre-commit
   - gym
