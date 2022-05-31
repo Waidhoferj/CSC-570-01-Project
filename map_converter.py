@@ -93,9 +93,11 @@ def read_keke_solutions(filename: str) -> List[str]:
 
     return solutions
 
-def read_keke(filename:str) -> List[LevelMap]:
+def read_keke(filename:str, include_solutions=False):
     """ Reads in keke format file <filename> and output a list of LevelMaps """
     levels = []
+    solutions = []
+
     with open(filename, "r") as f:
         keke_levels = json.load(f)["levels"]
         for keke_level in keke_levels:
@@ -106,8 +108,11 @@ def read_keke(filename:str) -> List[LevelMap]:
                     if c == " ": c = "." # dobule mapping on empties
                     level[-1].append(keke_map.inverse[c])
             levels.append(level)
+            solutions.append(keke_level["solution"]) # add solution to list so they line up   
             
-    return levels
+    if include_solutions:
+        return levels, solutions
+    return levels,  [] # don't include solutions
                     
 def write_keke(filename:str, level:LevelMap, solutions: List[str] = []):
     """ Writes level <level> to keke format stored in file <filename>"""
@@ -150,7 +155,6 @@ def write_baba_is_auto(filename:str, levels: List[LevelMap], solutions: List[str
     for i, solution in enumerate(solutions): # write solutions to i_sol.txt files
         with open(os.path.join(path, file, f"{i}_sol{ext}"), "w") as f:
             f.write(solution)
-    
     return
 
 converters = {
@@ -164,8 +168,10 @@ def convert(src:str,dst:str,src_format:str,dst_format:str, include_solns:bool):
     _, writer = converters[dst_format] # select the output format
     levels = reader(src)
     solutions = []
-    if include_solns is True and reader is read_keke:
-        solutions = read_keke_solutions(src)
+    if reader is read_keke:
+        levels, solutions = reader(src, include_solns)
+    else:
+        levels, = reader(src)
     writer(dst, levels, solutions)
 
 
@@ -176,7 +182,7 @@ if __name__ == "__main__":
     parser.add_argument("dest", help="Output file location and name")
     parser.add_argument("--source-format", default="keke")
     parser.add_argument("--dest-format", default="baba-is-auto")
-    parser.add_argument("--include-solutions", default=True)
+    parser.add_argument("--include-solutions", default=False, type=bool)
 
     args = parser.parse_args()
 
