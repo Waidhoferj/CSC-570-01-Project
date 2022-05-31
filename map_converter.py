@@ -145,9 +145,11 @@ def write_baba_is_auto(filename:str, levels: List[LevelMap], solutions: List[str
 
     for i, level in enumerate(levels):
         lines = []
-        height, width = len(level),len(level[0])
+        # height, width = len(level),len(level[0])
+        height, width = len(level)-2,len(level[0])-2
         lines.append(f"{width} {height}")
-        converted_level = [" ".join(map(get_tile,row)) for row in level]
+        # converted_level = [" ".join(map(get_tile,row)) for row in level]
+        converted_level = [" ".join(map(get_tile, row[1:-1])) for row in level[1:-1]]
         lines.extend(converted_level)
         with open(os.path.join(path, file, f"{i}{ext}"), "w") as f:
             f.writelines(line + "\n" for line in lines)
