@@ -9,6 +9,8 @@ import numpy as np
 import gym
 import random
 from collections import defaultdict
+from typing import List
+
 
 import os
 os.environ["SDL_AUDIODRIVER"] = "dsp"
@@ -32,6 +34,27 @@ def get_pos(rule_positions_cand):
 
     return None, None
 
+
+def get_your_positions(env: gym.Env) -> List[np.array]:
+    positions = env.game.GetMap().GetPositions(env.game.GetPlayerIcon())
+    positions = [np.array(p) for p in positions]
+    return positions
+
+def get_goal_positions(env: gym.Env) -> np.array:
+    rule_manager = env.game.GetRuleManager()
+    win_rules = rule_manager.GetRules(pyBaba.ObjectType.WIN)
+
+    convert = pyBaba.ConvertTextToIcon
+    win_positions = []
+    game_map = env.game.GetMap()
+
+    for win_rule in win_rules:
+
+        win_rule_type = win_rule.GetObjects()[0].GetTypes()[0]
+
+        win_positions.extend(game_map.GetPositions(convert(win_rule_type)))
+
+    return np.array(win_positions)
 
 # Function to get rule connected to YOU (from idaq_star_agent code)
 def get_is_you_pos(env):
@@ -71,7 +94,7 @@ def get_goal_pos(env: gym.Env) -> np.array:
 def get_rules(env: gym.Env) -> np.array:
     num_rules = env.game.GetRuleManager().GetNumRules()
     rules = [env.game.GetRuleManager().GetPropertyRules()[idx] for idx in range(num_rules)]
-    print('rules', rules)
+    #print('rules', rules)
 
     rules_by_coords = defaultdict()
     rules_by_nouns = defaultdict()
@@ -106,10 +129,41 @@ def get_rules(env: gym.Env) -> np.array:
 
     print('nouns', rules_by_nouns)
     #print('coords', rules_by_coords)
+    return rules_by_coords, rules_by_nouns, rules_by_verbs, rules_by_propt
 
-    for noun, value in rules_by_nouns.items():
-        pass
+def get_features(env):
+    rules_by_coords, rules_by_nouns, rules_by_verbs, rules_by_propt = get_rules(env)
+    win_rule_exists = None
+    win_reachable = None
+    win_location = None
+    #can_push_something = 0
+    #pushable_object = 0
+    #obstacles = 2d map
 
+    if not rules_by_propt[pyBaba.ObjectType.WIN]:
+        print('no win')
+        win_rule_exists = 0
+
+
+    return rules_by_propt[pyBaba.ObjectType.WIN]
+
+
+    # state[0] - BABA_TEXT, TILE
+    # state[1] - IS_TEXT
+    # state[2] - YOU_TEXT
+    # state[3] - ICON_EMPTY
+    # state[4] - FLAG_TEXT
+    # state[5] - WIN_TEXT
+    # state[6] - ICON_WALL (STOP ICONS) ???
+    # state[7] - ICON_ROCK (PUSH ICONS) ???
+    # state[8] - ICON_BABA
+    # state[9] - ICON_FLAG
+    # state[10] - WALL_TEXT
+    # state[11] - STOP_TEXT
+    # state[12] - ROCK_TEXT
+    # state[13] - PUSH_TEXT
+    # state[14] - TEXT?
+    # state[15] - TEXT?
 
     # 1. We want IS YOU rules to see what the agent can move
          # How to store multiple moving objects?
@@ -120,6 +174,7 @@ def get_rules(env: gym.Env) -> np.array:
 
     # Provide features for the ML models
     # Features:
+    # win rule exists = 1/0
     # win_reachable = 1/0
     # win_location = one hot 2d vector of map
     # can_push_something = 1/0
