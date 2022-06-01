@@ -95,7 +95,7 @@ class AStarAgent:
                 copied_game = env.copy()
                 possible_env = gym.make(env_name)
                 possible_env.reset()
-                possible_env.set_game(copied_game)
+                possible_env.setGame(copied_game)
 
                 _, _, done, _ = possible_env.step(action)
 
@@ -164,7 +164,7 @@ class AStarAgent:
 
 
 if __name__ == "__main__":
-    register_baba_env(env_name, env_path, enable_render=False)
+    register_baba_env(env_name, env_path)
     env = gym.make(env_name)
     env.reset()
     # state = env.reset().reshape(1, -1, 9, 11)
