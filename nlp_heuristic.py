@@ -13,35 +13,7 @@ from collections import defaultdict
 import os
 os.environ["SDL_AUDIODRIVER"] = "dsp"
 
-
-# Function to get positions of movable blocks
-def get_push_pos(env: gym.Env) -> np.array:
-    rule_st_is_you = env.game.GetRuleManager().GetRules(pyBaba.ObjectType.IS)[
-        0
-    ]  # returns [BABA, IS, YOU]
-    print(rule_st_is_you)
-    rule_objs = rule_st_is_you.GetObjects()
-
-    rule_positions_cand = [
-        env.game.GetMap().GetPositions(rule_obj.GetTypes()[0]) for rule_obj in rule_objs
-    ]
-
-
-# Function to get rule connected to YOU (from idaq_star_agent code)
-def get_is_you_pos(env):
-    rule_st_is_you = env.game.GetRuleManager().GetRules(pyBaba.ObjectType.YOU)[
-        0
-    ]  # returns [BABA, IS, YOU]
-    rule_objs = rule_st_is_you.GetObjects()
-
-    rule_positions_cand = [
-        env.game.GetMap().GetPositions(rule_obj.GetTypes()[0]) for rule_obj in rule_objs
-    ]
-
-    if len(rule_positions_cand[-1]) > 1:
-        return None, None
-
-    # check left to right
+def get_pos(rule_positions_cand):
     you_pos = rule_positions_cand[-1][0]
     is_pos = (you_pos[0] - 1, you_pos[1])
 
@@ -61,6 +33,23 @@ def get_is_you_pos(env):
     return None, None
 
 
+# Function to get rule connected to YOU (from idaq_star_agent code)
+def get_is_you_pos(env):
+    rule_st_is_you = env.game.GetRuleManager().GetRules(pyBaba.ObjectType.YOU)[
+        0
+    ]  # returns [BABA, IS, YOU]
+    rule_objs = rule_st_is_you.GetObjects()
+
+    rule_positions_cand = [
+        env.game.GetMap().GetPositions(rule_obj.GetTypes()[0]) for rule_obj in rule_objs
+    ]
+
+    if len(rule_positions_cand[-1]) > 1:
+        return None, None
+
+    return get_pos(rule_positions_cand)
+
+
 # Function to get rule WIN (from idaq_star_agent code)
 def get_goal_pos(env: gym.Env) -> np.array:
     rule_manager = env.game.GetRuleManager()
@@ -77,6 +66,7 @@ def get_goal_pos(env: gym.Env) -> np.array:
         win_positions.extend(game_map.GetPositions(convert(win_rule_type)))
 
     return np.array(win_positions)
+
 
 def get_rules(env: gym.Env) -> np.array:
     num_rules = env.game.GetRuleManager().GetNumRules()
@@ -131,8 +121,11 @@ def get_rules(env: gym.Env) -> np.array:
     # Provide features for the ML models
     # Features:
     # win_reachable = 1/0
-    # win_location = one hot 2 vector of map
-    #
+    # win_location = one hot 2d vector of map
+    # can_push_something = 1/0
+    # pushable_object = 2d map with 1s marking pushable objects
+    # # this can be rocks, grass, or word icons (nouns, verbs, properties)
+    # obstacles = 2d map showing reachable cells in the current state
 
 
 
@@ -148,15 +141,15 @@ def get_rules(env: gym.Env) -> np.array:
 
 
 
-    rule_st_is_you = env.game.GetRuleManager().GetRules(pyBaba.ObjectType.IS)[0]  # returns [BABA, IS, YOU]
-    print('rule_st_is_you', rule_st_is_you)
-    rule_objs = rule_st_is_you.GetObjects()
-    for rule in rule_objs:
-        print('rule_objs', rule.GetTypes()[0])
-    noun = rule_objs[0].GetTypes()[0]
-    noun_pos = env.game.GetMap().GetPositions(noun)
-    print('noun', noun)
-    rule_positions_cand = [
-        env.game.GetMap().GetPositions(rule_obj.GetTypes()[0]) for rule_obj in rule_objs
-    ]
-    print('rule_positions_cand', rule_positions_cand)
+    # rule_st_is_you = env.game.GetRuleManager().GetRules(pyBaba.ObjectType.IS)[0]  # returns [BABA, IS, YOU]
+    # print('rule_st_is_you', rule_st_is_you)
+    # rule_objs = rule_st_is_you.GetObjects()
+    # for rule in rule_objs:
+    #     print('rule_objs', rule.GetTypes()[0])
+    # noun = rule_objs[0].GetTypes()[0]
+    # noun_pos = env.game.GetMap().GetPositions(noun)
+    # print('noun', noun)
+    # rule_positions_cand = [
+    #     env.game.GetMap().GetPositions(rule_obj.GetTypes()[0]) for rule_obj in rule_objs
+    # ]
+    # print('rule_positions_cand', rule_positions_cand)
