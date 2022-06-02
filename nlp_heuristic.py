@@ -2,8 +2,6 @@ import random
 import sys
 from time import sleep
 
-from environment import register_baba_env
-import rendering
 import pyBaba
 import numpy as np
 import gym
@@ -96,10 +94,10 @@ def get_rules(env: gym.Env) -> np.array:
     rules = [env.game.GetRuleManager().GetPropertyRules()[idx] for idx in range(num_rules)]
     #print('rules', rules)
 
-    rules_by_coords = defaultdict()
-    rules_by_nouns = defaultdict()
-    rules_by_verbs = defaultdict()
-    rules_by_propt = defaultdict()
+    rules_by_coords = defaultdict(None)
+    rules_by_nouns = defaultdict(None)
+    rules_by_verbs = defaultdict(None)
+    rules_by_propt = defaultdict(None)
     # Store rules in a dict by NOUN (BABA, WALL, etc.) and by PROPERTY (YOU, WIN, etc.)
 
     for rule_idx in range(num_rules):
@@ -127,9 +125,10 @@ def get_rules(env: gym.Env) -> np.array:
             else:
                 print('Unknown type', rule_obj.GetTypes())
 
-    print('nouns', rules_by_nouns)
+    #print('nouns', rules_by_nouns)
     #print('coords', rules_by_coords)
     return rules_by_coords, rules_by_nouns, rules_by_verbs, rules_by_propt
+
 
 def get_features(env):
     rules_by_coords, rules_by_nouns, rules_by_verbs, rules_by_propt = get_rules(env)
@@ -139,19 +138,33 @@ def get_features(env):
     #can_push_something = 0
     #pushable_object = 0
     #obstacles = 2d map
+    #print('propt', type(rules_by_propt))
+    height = env.game.GetMap().GetHeight()
+    width = env.game.GetMap().GetWidth()
+    #print('hw', height, width)
 
-    if not rules_by_propt[pyBaba.ObjectType.WIN]:
-        print('no win')
+    if not rules_by_propt.get(pyBaba.ObjectType.WIN):
+        #print('no win')
         win_rule_exists = 0
+    else:
+        win_rule_exists = 1
 
 
-    return rules_by_propt[pyBaba.ObjectType.WIN]
+    goal_pos = None
+    win_location = np.zeros((1, 7, 7))
+    if win_rule_exists:
+        goal_pos = get_goal_pos(env)
+        goal_rows, goal_cols = goal_pos[:,1], goal_pos[:,0]
+        win_location[0, goal_rows, goal_cols] = 1
+
+    return win_location
+
 
 
     # state[0] - BABA_TEXT, TILE
     # state[1] - IS_TEXT
     # state[2] - YOU_TEXT
-    # state[3] - ICON_EMPTY
+    # state[3] - ICON_EMPTY - walkable (not the only walkable tiles tho)
     # state[4] - FLAG_TEXT
     # state[5] - WIN_TEXT
     # state[6] - ICON_WALL (STOP ICONS) ???
