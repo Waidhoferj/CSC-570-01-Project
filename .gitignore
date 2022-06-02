@@ -6,7 +6,7 @@ __pycache__
 .gitignore
 
 # Baba Content
-levels
+# levels
 baba_is_smart.egg-info
 checkpoints
 full_biy_LEVELS.json
