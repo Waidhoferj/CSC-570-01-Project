@@ -50,15 +50,22 @@ class BabaEnv(gym.Env):
         self.reset()
 
     def setup_user_controls(self):
+        done = False
         def handle_movement(event):
+            action = None
+            nonlocal done
             if event.unicode == "w":
-                self.step(pyBaba.Direction.UP)
+                action = pyBaba.Direction.UP
             elif event.unicode == "a":
-                self.step(pyBaba.Direction.LEFT)
+                action = pyBaba.Direction.LEFT
             elif event.unicode == "s":
-                self.step(pyBaba.Direction.DOWN)
+                action = pyBaba.Direction.DOWN
             elif event.unicode == "d":
-                self.step(pyBaba.Direction.RIGHT)
+                action = pyBaba.Direction.RIGHT
+            _,_, done, _ = self.step(action)
+
+            if done:
+                self.reset()
 
         self.renderer.on(pygame.KEYUP,handle_movement)
 
