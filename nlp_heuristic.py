@@ -160,6 +160,70 @@ def get_features(env):
     return win_location
 
 
+def get_property_positions(env: gym.Env) -> np.array:
+    """
+    Finds the position of every object with selected properties on the map.
+    Encodes this into a numpy bitmask with shape (map_width, map_height, n_properties)
+    """
+    properties = [
+        "YOU",
+        "STOP",
+        "PUSH",
+        "PULL",
+        "SWAP",
+        # "TELE",
+        "MOVE",
+        # "FALL",
+        # "SHIFT",
+        "WIN",
+        "DEFEAT",
+        "SINK",
+        "HOT",
+        "MELT",
+        "SHUT",
+        "OPEN",
+        "WEAK",
+        "FLOAT",
+        # "MORE",
+        # "UP",
+        # "DOWN",
+        # "LEFT",
+        # "RIGHT",
+        "WORD",
+        # "BEST",
+        # "SLEEP",
+        # "RED",
+        # "BLUE",
+        # "HIDE",
+        # "BONUS",
+        # "END",
+        # "DONE",
+        # "SAFE",
+    ]
+    properties = [getattr(pyBaba.ObjectType, prop) for prop in properties]
+    property_positions = []
+    game_map = env.game.GetMap()
+    width, height = game_map.GetWidth(), game_map.GetHeight()
+
+    rule_manager = env.game.GetRuleManager()
+    for property in properties:
+        rules = rule_manager.GetRules(property)
+
+        convert = pyBaba.ConvertTextToIcon
+        positions = np.zeros((width, height))
+        game_map = env.game.GetMap()
+
+        for rule in rules:
+            obj_type = rule.GetObjects()[0].GetTypes()[0]
+            for pos in game_map.GetPositions(convert(obj_type)):
+                positions[pos[0]][pos[1]] = 1
+
+        property_positions.append(np.array(positions))
+    return np.stack(property_positions)
+
+
+
+
 
     # state[0] - BABA_TEXT, TILE
     # state[1] - IS_TEXT
