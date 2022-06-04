@@ -1,4 +1,5 @@
 import copy
+from typing import List
 import gym
 from gym.utils import seeding
 from gym.envs.registration import register
@@ -6,6 +7,7 @@ import numpy as np
 
 import pyBaba
 import pygame
+from nlp_heuristic import get_property_positions
 import rendering
 from gym import spaces
 
@@ -13,32 +15,27 @@ from gym import spaces
 registered_envs = set()
 
 
-def register_baba_env(
-    name: str, path: str, enable_render=True, max_episode_steps=200, user_controls=False
-):
+def register_baba_env(name: str, max_episode_steps=200, env_class_str="BabaEnv", **env_kwargs):
     if name not in registered_envs:
         registered_envs.add(name)
         register(
             id=name,
-            entry_point="environment:BabaEnv",
+            entry_point=f"environment:{env_class_str}",
             max_episode_steps=max_episode_steps,
             nondeterministic=True,
-            kwargs={
-                "path": path,
-                "enable_render": enable_render,
-                "user_controls": user_controls,
-            },
+            kwargs=env_kwargs,
         )
 
 
 class BabaEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
 
-    def __init__(self, path: str = "", enable_render=True, user_controls=False):
+    def __init__(self, path: str = "", enable_render=True, user_controls=False, stage_size=None):
         super(BabaEnv, self).__init__()
         self.path = path
         self.game = pyBaba.Game(self.path)
         self.enable_render = enable_render
+        self.stage_size=stage_size
 
         if enable_render:
             self.renderer = rendering.Renderer(self.game)
@@ -478,3 +475,72 @@ class BabaEnv(gym.Env):
             curr_rules.add(tuple(curr_rule))
 
         return curr_rules
+
+
+
+class PropertyBasedEnv(BabaEnv):
+    def get_obs(self):
+        return get_property_positions(self, stage_size=(30,30))
+
+
+class ProgressiveTrainingEnv(PropertyBasedEnv):
+    def __init__(self, levels:List[str], 
+    enable_render=True, 
+    score_threshold=170, 
+    episode_range=[5, 170], 
+    patience=3,
+    max_stage_size = (30,30)):
+        assert len(levels) > 0
+        super().__init__(levels[0], enable_render, user_controls=False)
+        self.levels = levels
+        self.score_history = []
+        self.score_threshold = score_threshold
+        self.episode_range = episode_range
+        self.patience = patience
+        self.episode = 0
+        self.level_idx = 0
+        self.score = 0
+        self.level_history = {}
+        self.max_stage_size = max_stage_size
+        
+
+    def next_level(self):
+        self.level_history[self.levels[self.level_idx]] = {"episodes": self.episode, "score": self.avg_score()}
+        self.score_history = []
+        self.episode = 0
+        self.level_idx +=1
+        if not self.training_is_complete():
+            super().__init__(self.levels[self.level_idx], self.enable_render, False)
+
+
+    def avg_score(self,window_size=100):
+        return np.mean(self.score_history[-window_size:])
+
+    def pad_stage(self, data):
+        pass
+
+
+    
+    def step(self, action):
+        next_obs, reward, done, info = super().step(action)
+        self.score += reward
+        if done:
+            self.episode +=1
+            self.score_history.append(self.score)
+            self.score = 0
+            h_size = len(self.score_history)
+            out_of_patience =h_size >= self.patience and all(self.score_history[i] >= self.score_history[i+1] for i in range(h_size - self.patience, h_size -1))
+            # mastered_level = self.avg_score() > self.score_threshold and self.episode >= self.episode_range[0]
+            out_of_episodes = self.episode_range[1] < self.episode
+
+            if out_of_patience or out_of_episodes:
+                self.next_level()
+        return next_obs, reward, done, info
+    
+    def training_is_complete(self) -> bool:
+        return len(self.levels) <= self.level_idx
+
+    def get_report(self):
+        return self.level_history
+
+
