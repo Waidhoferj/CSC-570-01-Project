@@ -8,6 +8,7 @@ import pyBaba
 import pygame
 import rendering
 from gym import spaces
+import itertools
 
 # Registration check
 registered_envs = set()
@@ -58,7 +59,7 @@ class BabaEnv(gym.Env):
 
         self.action_size = len(self.action_space)
 
-        self.immovable_objs = self.get_immovable_objs()
+        self.immovable_rule_objs = self.get_immovable_rule_objs()
 
         self.seed()
         self.reset()
@@ -133,7 +134,7 @@ class BabaEnv(gym.Env):
             pyBaba.Preprocess.StateToTensor(self.game), dtype=np.float32
         ).reshape(-1, self.game.GetMap().GetHeight(), self.game.GetMap().GetWidth())
 
-    def get_immovable_objs(self):
+    def get_immovable_rule_objs(self):
         # get rules that are on the corders
         m_width = self.game.GetMap().GetWidth()
         m_height = self.game.GetMap().GetHeight()
@@ -151,14 +152,13 @@ class BabaEnv(gym.Env):
             op_obj = op_obj.GetTypes()[0]
             prop_obj = prop_obj.GetTypes()[0]
 
+            print(noun_obj, op_obj, prop_obj)
             noun_obj_pos, op_obj_pos, prop_obj_pos = rule_pos
 
             is_at_corners = False
 
-            # if the object is part of st_is_you
-            st_is_you_pos, _ = self.get_rule_w_property(
-                pyBaba.ObjectType.YOU
-            )  # get_st_is_you_positions(self)
+            # if the object is part of st_is_you, then can't move
+            st_is_you_pos, _ = self.get_rule_w_property(pyBaba.ObjectType.YOU)
 
             if [noun_obj_pos, op_obj_pos, prop_obj_pos] == st_is_you_pos:
                 if noun_obj in immovable_objs:
@@ -223,28 +223,33 @@ class BabaEnv(gym.Env):
                     immovable_objs[prop_obj] = {prop_obj_pos}
 
             if not is_at_corners:
+                # Add to the object if all three can't move
                 # check if obj can move
                 if not self.can_move_obj(noun_obj_pos):
                     if noun_obj in immovable_objs:
                         immovable_objs[noun_obj].add(noun_obj_pos)
                     else:
                         immovable_objs[noun_obj] = {noun_obj_pos}
+
                 if not self.can_move_obj(op_obj_pos):
                     if op_obj in immovable_objs:
                         immovable_objs[op_obj].add(op_obj_pos)
                     else:
                         immovable_objs[op_obj] = {op_obj_pos}
+
                 if not self.can_move_obj(prop_obj_pos):
                     if prop_obj in immovable_objs:
                         immovable_objs[prop_obj].add(prop_obj_pos)
                     else:
                         immovable_objs[prop_obj] = {prop_obj_pos}
-
+            print(immovable_objs)
+            # TODO: add it to get usable objects
+            # TODO: when forming a new rule, filter out those not movable
         return immovable_objs
 
     def update_immovable_objs(self):
         # update immovable objs
-        self.immovable_objs = self.get_immovable_objs()
+        self.immovable_rule_objs = self.get_immovable_rule_objs()
 
     def can_move_obj(self, obj_pos):
         x, y = obj_pos
@@ -291,7 +296,7 @@ class BabaEnv(gym.Env):
                 x, up_closest_empty_y, pyBaba.Direction.DOWN
             )
 
-        print(x, y, can_move_left, can_move_right, can_move_up, can_move_down)
+        # print(x, y, can_move_left, can_move_right, can_move_up, can_move_down)
 
         return can_move_left or can_move_right or can_move_up or can_move_down
 
@@ -406,10 +411,10 @@ class BabaEnv(gym.Env):
                     # filter those in the corner
                     noun_pos = list(
                         filter(
-                            lambda pos: (noun_type not in self.immovable_objs)
+                            lambda pos: (noun_type not in self.immovable_rule_objs)
                             or (
-                                noun_type in self.immovable_objs
-                                and pos not in self.immovable_objs[noun_type]
+                                noun_type in self.immovable_rule_objs
+                                and pos not in self.immovable_rule_objs[noun_type]
                             ),
                             noun_pos,
                         )
@@ -426,10 +431,10 @@ class BabaEnv(gym.Env):
                     # filter those in the corner
                     verb_pos = list(
                         filter(
-                            lambda pos: (verb_type not in self.immovable_objs)
+                            lambda pos: (verb_type not in self.immovable_rule_objs)
                             or (
-                                verb_type in self.immovable_objs
-                                and pos not in self.immovable_objs[verb_type]
+                                verb_type in self.immovable_rule_objs
+                                and pos not in self.immovable_rule_objs[verb_type]
                             ),
                             verb_pos,
                         )
@@ -446,10 +451,10 @@ class BabaEnv(gym.Env):
                     # filter those in the corner
                     prop_pos = list(
                         filter(
-                            lambda pos: (prop_type not in self.immovable_objs)
+                            lambda pos: (prop_type not in self.immovable_rule_objs)
                             or (
-                                prop_type in self.immovable_objs
-                                and pos not in self.immovable_objs[prop_type]
+                                prop_type in self.immovable_rule_objs
+                                and pos not in self.immovable_rule_objs[prop_type]
                             ),
                             prop_pos,
                         )
@@ -478,3 +483,32 @@ class BabaEnv(gym.Env):
             curr_rules.add(tuple(curr_rule))
 
         return curr_rules
+
+    def get_new_rules(self):
+        noun_types_pos, op_types_pos, prop_types_pos = self.get_movable_objs()
+
+        print(noun_types_pos, op_types_pos, prop_types_pos)
+
+        noun_types = list(noun_types_pos.keys())
+        op_types = list(op_types_pos.keys())
+        prop_types = list(prop_types_pos.keys())
+        curr_rules = self.get_curr_rules()
+
+        cand_rules = []
+        for comb in itertools.product(noun_types, op_types, prop_types):
+            if comb not in curr_rules:
+                cand_rules.append(comb)
+
+        return cand_rules
+
+    def get_obj_positions(self, obj_type):
+        noun_types_pos, op_types_pos, prop_types_pos = self.get_movable_objs()
+
+        if obj_type in noun_types_pos:
+            return noun_types_pos[obj_type]
+        elif obj_type in op_types_pos:
+            return op_types_pos[obj_type]
+        elif obj_type in prop_types_pos:
+            return prop_types_pos[obj_type]
+        else:
+            return []
