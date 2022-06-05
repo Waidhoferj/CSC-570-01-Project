@@ -27,7 +27,7 @@ logger = Logger()
 
 env_name = "baba-babaisyou-v0"
 env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
-register_baba_env(env_name, env_path, enable_render=False)
+register_baba_env(env_name, levels=[f"levels/out/{i}.txt" for i in range(100)], env_class_str="ProgressiveTrainingEnv", enable_render=False)
 
 
 def make_cuda(input):

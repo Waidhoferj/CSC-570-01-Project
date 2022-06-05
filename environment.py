@@ -1,4 +1,5 @@
 import copy
+from typing import List
 import gym
 from gym.utils import seeding
 from gym.envs.registration import register
@@ -10,28 +11,24 @@ import rendering
 from gym import spaces
 import itertools
 
-from nlp_heuristic import get_features, get_property_positions
+from nlp_heuristic import get_features
+
 
 # Registration check
 registered_envs = set()
 
 
 def register_baba_env(
-    name: str, path: str, enable_render=True, max_episode_steps=200, user_controls=False, extra_features=None
+    name: str, max_episode_steps=200, env_class_str="BabaEnv", **kwargs
 ):
     if name not in registered_envs:
         registered_envs.add(name)
         register(
             id=name,
-            entry_point="environment:BabaEnv",
+            entry_point=f"environment:{env_class_str}",
             max_episode_steps=max_episode_steps,
             nondeterministic=True,
-            kwargs={
-                "path": path,
-                "enable_render": enable_render,
-                "user_controls": user_controls,
-                "extra_features": extra_features,
-            },
+            kwargs=kwargs,
         )
 
 
@@ -61,8 +58,6 @@ class BabaEnv(gym.Env):
         self.observation_space = spaces.MultiBinary(self.get_obs().shape)
 
         self.action_size = len(self.action_space)
-
-        print("hello")
         self.immovable_rule_objs = self.get_immovable_rule_objs()
 
         self.seed()
@@ -612,3 +607,164 @@ class BabaEnv(gym.Env):
             return prop_types_pos[obj_type]
         else:
             return []
+
+class PropertyBasedEnv(BabaEnv):
+    def get_obs(self):
+        return get_property_positions(self, stage_size=(30,30))
+
+class PaddedObsEnv(BabaEnv):
+    def get_obs(self, stage_size=(20,20)):
+            obs = super().get_obs()
+            masks, old_h, old_w = obs.shape
+            padded_obs = np.zeros((masks, *stage_size))
+            padded_obs[:,:old_h, :old_w] = obs
+            return padded_obs
+
+
+class ProgressiveTrainingEnv(PropertyBasedEnv):
+    def __init__(self, levels:List[str], 
+    enable_render=True, 
+    score_threshold=170, 
+    episode_range=[20, 20], 
+    patience=3,
+    max_stage_size = (30,30)):
+        assert len(levels) > 0
+        super().__init__(levels[0], enable_render, user_controls=False)
+        self.levels = levels
+        self.score_history = []
+        self.score_threshold = score_threshold
+        self.episode_range = episode_range
+        self.patience = patience
+        self.episode = 0
+        self.level_idx = 0
+        self.score = 0
+        self.level_history = {}
+        self.max_stage_size = max_stage_size
+        self.observation_space = spaces.MultiBinary(self.get_obs().shape)
+        
+
+    def next_level(self):
+        self.level_history[self.levels[self.level_idx]] = {"episodes": self.episode, "score": self.avg_score()}
+        self.score_history = []
+        self.episode = 0
+        self.level_idx +=1
+        if not self.training_is_complete():
+            super().__init__(self.levels[self.level_idx], self.enable_render, False)
+            print("ProgressiveTrainingEnv: Moving to level ", self.levels[self.level_idx])
+
+
+    def avg_score(self,window_size=100):
+        return np.mean(self.score_history[-window_size:])
+
+    def pad_stage(self, data):
+        pass
+
+
+    
+    def step(self, action):
+        next_obs, reward, done, info = super().step(action)
+        self.score += reward
+        if done:
+            self.episode +=1
+            self.score_history.append(self.score)
+            self.score = 0
+            h_size = len(self.score_history)
+            # out_of_patience =h_size >= self.patience and all(self.score_history[i] >= self.score_history[i+1] for i in range(h_size - self.patience, h_size -1))
+            # mastered_level = self.avg_score() > self.score_threshold and self.episode >= self.episode_range[0]
+            out_of_episodes = self.episode_range[1] < self.episode
+
+            if out_of_episodes:
+                self.next_level()
+        return next_obs, reward, done, info
+    
+    def training_is_complete(self) -> bool:
+        return len(self.levels) <= self.level_idx
+
+    def get_report(self):
+        return self.level_history
+
+
+def get_property_positions(env: gym.Env, stage_size=None) -> np.array:
+    """
+    Finds the position of every object with selected properties on the map.
+    Encodes this into a numpy bitmask with shape (map_width, map_height, n_properties)
+    """
+    properties = [
+        "YOU",
+        "STOP",
+        "PULL",
+        "PUSH",
+        "SWAP",
+        # "TELE",
+        "MOVE",
+        # "FALL",
+        # "SHIFT",
+        "WIN",
+        "DEFEAT",
+        "SINK",
+        "HOT",
+        "MELT",
+        "SHUT",
+        "OPEN",
+        "WEAK",
+        "FLOAT",
+        # "MORE",
+        # "UP",
+        # "DOWN",
+        # "LEFT",
+        # "RIGHT",
+        "WORD",
+        # "BEST",
+        # "SLEEP",
+        # "RED",
+        # "BLUE",
+        # "HIDE",
+        # "BONUS",
+        # "END",
+        # "DONE",
+        # "SAFE",
+    ]
+
+    properties = [getattr(pyBaba.ObjectType, prop) for prop in properties]
+    game_map = env.game.GetMap()
+    rule_manager = env.game.GetRuleManager()
+    property_positions = []
+    map_width, map_height = (game_map.GetWidth(), game_map.GetHeight())
+    width, height = (map_width, map_height) if stage_size is None else stage_size
+
+    if stage_size is not None:
+        reachable_mask = np.zeros((height,width))
+        reachable_mask[:map_height, :map_width] = 1
+        property_positions.append(reachable_mask)
+
+    
+    for property in properties:
+        rules = rule_manager.GetRules(property)
+
+        convert = pyBaba.ConvertTextToIcon
+        positions = np.zeros((height, width))
+        for rule in rules:
+            obj_type = rule.GetObjects()[0].GetTypes()[0]
+            for pos in game_map.GetPositions(convert(obj_type)):
+                positions[pos[1]][pos[0]] = 1
+        property_positions.append(positions)
+
+    # Find all text locations
+    text_mask = np.zeros((height, width))
+    for y in range(map_height):
+        for x in range(map_width):
+            if game_map.At(x,y).HasTextType():
+                text_mask[y,x] = 1
+    property_positions.append(text_mask)
+
+
+
+    # Push is a special case since all text should be push as well
+    push_idx = properties.index(pyBaba.ObjectType.PUSH)
+    property_positions[push_idx][text_mask == 1] = 1
+    
+
+    return np.stack(property_positions)
+
+
+
