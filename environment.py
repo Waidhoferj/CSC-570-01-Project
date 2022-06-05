@@ -131,23 +131,28 @@ class BabaEnv(gym.Env):
     def set_game(self, game):
         self.game = game
 
-    def get_obs(self, extra_features=None):
+    def get_obs(self):
         game_tensor = np.array(
             pyBaba.Preprocess.StateToTensor(self.game), dtype=np.float32
         ).reshape(-1, self.game.GetMap().GetHeight(), self.game.GetMap().GetWidth())
-
-        if extra_features is None:
+        #print('game', game_tensor.shape)
+        if self.extra_features is None:
            return game_tensor
         else:
             tmp = []
-            if 'WIN' in extra_features:
+            if 'WIN' in self.extra_features:
                 tmp.append(get_features(self))
-            if 'PROPT':
+                #print('WIN', tmp[0].shape)
+            if 'PROPT' in self.extra_features:
                 tmp.append(get_property_positions(self))
+                #print('PROPT', tmp[0].shape)
             if len(tmp) > 1:
+                #print(tmp[0].shape, tmp[1].shape)
                 tmp = np.concatenate((tmp[0], tmp[1]), axis=0)
-                print(tmp.shape)
-            return np.concatenate((game_tensor, tmp), axis=0)
+                #print(tmp.shape)
+                return np.concatenate((game_tensor, tmp), axis=0)
+            else:
+                return np.concatenate((game_tensor, tmp[0]), axis=0)
 
     def get_immovable_objs(self):
         # get rules that are on the corders
