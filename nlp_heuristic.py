@@ -151,7 +151,7 @@ def get_features(env):
 
 
     goal_pos = None
-    win_location = np.zeros((1, 7, 7))
+    win_location = np.zeros((1, height, width))
     if win_rule_exists:
         goal_pos = get_goal_pos(env)
         goal_rows, goal_cols = goal_pos[:,1], goal_pos[:,0]
@@ -210,8 +210,8 @@ def get_property_positions(env: gym.Env, stage_size=None) -> np.array:
         map_width, map_height = (game_map.GetWidth(), game_map.GetHeight())
         reachable_mask[:map_height, :map_width] = 1
         property_positions.append(reachable_mask)
-        
-    
+
+
     for property in properties:
         rules = rule_manager.GetRules(property)
 
