@@ -1,4 +1,6 @@
+import pdb
 import pyBaba
+
 
 move_map = {
     0: pyBaba.Direction.RIGHT,
@@ -91,6 +93,29 @@ def check_boundaries(curr_pos, m_width, m_height):
 
 def check_obstacles(curr_pos, dir, env):
     return env.game.CanMove(curr_pos[0], curr_pos[1], dir)
+
+
+def is_empty(curr_pos, env):
+    if not curr_pos:
+        return False
+    return env.game.GetMap().At(curr_pos[0], curr_pos[1]).HasType(pyBaba.ICON_EMPTY)
+
+
+def check_objects(next_pos, env):
+
+    your_position = env.game.GetMap().GetPositions(env.game.GetPlayerIcon())[0]
+
+    if your_position == next_pos:
+        return True
+
+    if env.game.GetMap().At(next_pos[0], next_pos[1]).HasTextType():
+        return True
+
+    can_move = True
+    for type in env.game.GetMap().At(next_pos[0], next_pos[1]).GetTypes():
+        if type != pyBaba.ICON_EMPTY:
+            can_move = False
+    return can_move
 
 
 def can_push(env, curr_pos, moves_to_make_list, m_width, m_height):

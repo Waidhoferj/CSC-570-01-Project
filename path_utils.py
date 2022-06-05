@@ -1,12 +1,15 @@
+import pdb
 import numpy as np
 import pyBaba
 import time
 
 from utils import (
     check_boundaries,
+    check_objects,
     check_obstacles,
     can_push,
     get_moves_to_make,
+    is_empty,
     move_map,
     is_breaking_st_is_you,
 )
@@ -20,10 +23,15 @@ def place_agent_and_push(
     found_path=None,
     enable_render=False,
 ):
-    agent_push_noun_path, agent_push_noun_move = get_agent_push_path(
+    agent_push_path, agent_push_moves = get_agent_push_path(
         env, obj_start_pos, obj_goal_pos, found_path
     )
-    agent_push_start_pos = agent_push_noun_path[0]
+
+    # agent can't go there :(
+    if not agent_push_path:
+        return False
+
+    agent_push_start_pos = agent_push_path[0]
 
     # Check if agent is in the spot to push
     if not (
@@ -34,13 +42,12 @@ def place_agent_and_push(
             ]
         )
     ).any():
-
         # TODO: for now, just select the first one, but in the future, this could be chosen more wisely
         your_pos = tuple(agent_curr_position[0])
 
         # move agent to the right location first
         agent_path, agent_moves = get_path_and_moves(
-            env, your_pos, agent_push_start_pos
+            env, your_pos, agent_push_start_pos, flag="agent"
         )
 
         if agent_moves:
@@ -52,7 +59,7 @@ def place_agent_and_push(
                     time.sleep(0.2)
 
             # push prop
-            for agent_push_move in agent_push_noun_move:
+            for agent_push_move in agent_push_moves:
                 env.step(agent_push_move)
                 env.render()
                 time.sleep(0.2)
@@ -60,11 +67,17 @@ def place_agent_and_push(
             return True
         else:
             return False
+    else:
+        # push prop
+        for agent_push_move in agent_push_moves:
+            env.step(agent_push_move)
+            env.render()
+            time.sleep(0.2)
     # don't need to move
     return True
 
 
-def get_path_and_moves(env, start_pos, goal_pos):
+def get_path_and_moves(env, start_pos, goal_pos, flag="obj"):
     # bfs
 
     # path, moves
@@ -74,6 +87,7 @@ def get_path_and_moves(env, start_pos, goal_pos):
     visited = {start_pos}
     m_width, m_height = env.game.GetMap().GetWidth(), env.game.GetMap().GetHeight()
 
+    is_start = True
     while queue:
         path, moves = queue.pop(0)
 
@@ -96,15 +110,48 @@ def get_path_and_moves(env, start_pos, goal_pos):
             move_dir = move_map[i]
 
             if next_pos not in visited:
+                if flag == "obj" and is_start:
+                    start_pos = get_start_push_pos(curr_pos, move_dir, env)
+
+                    if not is_empty(start_pos, env):
+                        continue
+
                 if (
                     check_boundaries(next_pos, m_width, m_height)
                     and check_obstacles(curr_pos, move_dir, env)
+                    and check_objects(next_pos, env)
                     and not is_breaking_st_is_you(env, move_dir, [curr_pos])
                 ):
                     visited.add(next_pos)
                     queue.append([path + [next_pos], moves + [move_dir]])
 
+        if is_start:
+            is_start = False
     return [], []  # unreachable
+
+
+def get_start_push_pos(curr_pos, move_dir, env):
+    m_width = env.game.GetMap().GetWidth()
+    m_height = env.game.GetMap().GetHeight()
+
+    if move_dir == pyBaba.Direction.RIGHT:
+        # left
+        next_pos = (curr_pos[0] - 1, curr_pos[1])
+
+    elif move_dir == pyBaba.Direction.LEFT:
+        # right
+        next_pos = (curr_pos[0] + 1, curr_pos[1])
+    elif move_dir == pyBaba.Direction.UP:
+        # down
+        next_pos = (curr_pos[0], curr_pos[1] + 1)
+    else:
+        # up
+        next_pos = (curr_pos[0], curr_pos[1] - 1)
+
+    if check_boundaries(next_pos, m_width, m_height):
+        return next_pos
+    else:
+        return ()
 
 
 def add_agent_path(env, path, moves):
@@ -166,7 +213,7 @@ def get_agent_push_path(env, obj_start=[], obj_goal=[], found_path=None):
     """
 
     if not found_path:
-        obj_path, obj_moves = get_path_and_moves(env, obj_start, obj_goal)
+        obj_path, obj_moves = get_path_and_moves(env, tuple(obj_start), tuple(obj_goal))
 
     else:
         obj_path, obj_moves = found_path

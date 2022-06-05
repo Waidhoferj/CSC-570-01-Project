@@ -59,6 +59,7 @@ class BabaEnv(gym.Env):
 
         self.action_size = len(self.action_space)
 
+        print("hello")
         self.immovable_rule_objs = self.get_immovable_rule_objs()
 
         self.seed()
@@ -152,6 +153,7 @@ class BabaEnv(gym.Env):
             op_obj = op_obj.GetTypes()[0]
             prop_obj = prop_obj.GetTypes()[0]
 
+            print("immovable_obj")
             print(noun_obj, op_obj, prop_obj)
             noun_obj_pos, op_obj_pos, prop_obj_pos = rule_pos
 
@@ -249,6 +251,7 @@ class BabaEnv(gym.Env):
 
     def update_immovable_objs(self):
         # update immovable objs
+        print("there")
         self.immovable_rule_objs = self.get_immovable_rule_objs()
 
     def can_move_obj(self, obj_pos):
@@ -464,6 +467,54 @@ class BabaEnv(gym.Env):
                         prop_types_pos[prop_type] = prop_pos
         return noun_types_pos, op_types_pos, prop_types_pos
 
+    def get_usable_objs(self):
+        (
+            movable_noun_types_pos,
+            movable_op_types_pos,
+            movable_prop_types_pos,
+        ) = self.get_movable_objs()
+
+        noun_types_pos = movable_noun_types_pos.copy()
+        op_types_pos = movable_op_types_pos.copy()
+        prop_types_pos = movable_prop_types_pos.copy()
+
+        for rule in self.game.GetRuleManager().GetPropertyRules():
+            rule_objs = rule.GetObjects()
+
+            rule_pos, _ = self.get_rule_pos_direction(rule_objs)
+
+            noun_obj, op_obj, prop_obj = rule_objs
+
+            noun_obj = noun_obj.GetTypes()[0]
+            op_obj = op_obj.GetTypes()[0]
+            prop_obj = prop_obj.GetTypes()[0]
+
+            # print(noun_obj, op_obj, prop_obj)
+
+            noun_obj_pos, op_obj_pos, prop_obj_pos = rule_pos
+
+            if (
+                noun_obj in movable_noun_types_pos
+                or op_obj in movable_op_types_pos
+                or prop_obj in movable_prop_types_pos
+            ):
+                if noun_obj in movable_noun_types_pos:
+                    noun_types_pos[noun_obj].append(noun_obj_pos)
+                else:
+                    noun_types_pos[noun_obj] = [noun_obj_pos]
+
+                if op_obj in movable_op_types_pos:
+                    op_types_pos[op_obj].append(op_obj_pos)
+                else:
+                    op_types_pos[op_obj] = [op_obj_pos]
+
+                if prop_obj in movable_prop_types_pos:
+                    prop_types_pos[prop_obj].append(prop_obj_pos)
+                else:
+                    prop_types_pos[prop_obj] = [prop_obj_pos]
+
+        return noun_types_pos, op_types_pos, prop_types_pos
+
     def win_rule_exists(self):
         win_rule_exist = False
         for rule in self.game.GetRuleManager().GetPropertyRules():
@@ -485,9 +536,11 @@ class BabaEnv(gym.Env):
         return curr_rules
 
     def get_new_rules(self):
-        noun_types_pos, op_types_pos, prop_types_pos = self.get_movable_objs()
+        noun_types_pos, op_types_pos, prop_types_pos = self.get_usable_objs()
 
-        print(noun_types_pos, op_types_pos, prop_types_pos)
+        print("noun", noun_types_pos)
+        print("op", op_types_pos)
+        print("prop", prop_types_pos)
 
         noun_types = list(noun_types_pos.keys())
         op_types = list(op_types_pos.keys())
@@ -502,7 +555,12 @@ class BabaEnv(gym.Env):
         return cand_rules
 
     def get_obj_positions(self, obj_type):
-        noun_types_pos, op_types_pos, prop_types_pos = self.get_movable_objs()
+        noun_types_pos, op_types_pos, prop_types_pos = self.get_usable_objs()
+
+        print("get_obj_pos")
+        print(noun_types_pos)
+        print(op_types_pos)
+        print(prop_types_pos)
 
         if obj_type in noun_types_pos:
             return noun_types_pos[obj_type]

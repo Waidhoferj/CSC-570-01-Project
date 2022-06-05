@@ -1,15 +1,17 @@
-import random
+from collections import defaultdict
 import os
 from time import sleep
 
-env_name = "baba-volcano-v0"
-env_path = os.path.join("baba-is-auto", "Resources", "Maps", "volcano.txt")
+env_name = "baba-babaisyou-v0"
+env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
+
+env_name = "baba-level-v0"
+env_path = os.path.join("levels", "out", "3.txt")
+
 from environment import register_baba_env
-import pdb
+from rule_utils import create_win_rule
+from utils import is_breaking_rule
 
-import heapq
-
-import rendering
 import pdb
 import pyBaba
 import numpy as np
@@ -52,15 +54,42 @@ class IDAStarAgent:
             Whether the environment is at a final state
         """
 
+        new_rules = env.get_new_rules()
+
+        # for rule in new_rules:
+        #     print(rule)
+
+        # create win rule if you don't have
+        if not env.win_rule_exists():
+            can_create_win_rule = create_win_rule(
+                env, new_rules, self, enable_render=True
+            )
+            if not can_create_win_rule:
+                print("Not solvable!")
+                exit(-1)
+
         threshold = self.heuristic(env)
 
         moves_taken = 0
         optimal_moves = []
-        i = 0
 
         while True:
             possible_env = gym.make(env_name)
             possible_env.reset()
+
+            new_rules = possible_env.get_new_rules()
+
+            # for rule in new_rules:
+            #     print(rule)
+
+            # create win rule if you don't have
+            if not possible_env.win_rule_exists():
+                can_create_win_rule = create_win_rule(
+                    possible_env, new_rules, self, enable_render=True
+                )
+                if not can_create_win_rule:
+                    print("Not solvable!")
+                    exit(-1)
 
             visited = {tuple(possible_env.get_obs().reshape(-1).tolist())}
 
@@ -89,68 +118,14 @@ class IDAStarAgent:
         positions = self.get_your_positions(env)
 
         # rule: _ is YOU
-        rule_positions, rule_direction = self.get_st_is_you_positions(env)
+        rule_positions, rule_direction = env.get_rule_w_property(pyBaba.ObjectType.YOU)
 
         if not rule_positions:
             return True
         else:
-            return not self.is_breaking_rule(
+            return not is_breaking_rule(
                 action, positions, rule_positions, rule_direction
             )
-
-    def is_breaking_rule(self, action, your_positions, rule_positions, rule_direction):
-        your_x_pos, your_y_pos = your_positions[0]
-
-        if rule_direction == pyBaba.RuleDirection.HORIZONTAL:
-            if action == pyBaba.Direction.UP:
-                return (your_x_pos, your_y_pos - 1) in rule_positions
-            elif action == pyBaba.Direction.DOWN:
-                return (your_x_pos, your_y_pos + 1) in rule_positions
-            else:
-                return False
-        elif rule_direction == pyBaba.RuleDirection.VERTICAL:
-            if action == pyBaba.Direction.LEFT:
-                return (your_x_pos - 1, your_y_pos) in rule_positions
-            elif action == pyBaba.Direction.RIGHT:
-                return (your_x_pos + 1, your_y_pos) in rule_positions
-            else:
-                return False
-        else:
-            print("Unrecognized rule direction!")
-            exit(-1)
-
-    def get_st_is_you_positions(self, env):
-        rule_st_is_you = env.game.GetRuleManager().GetRules(pyBaba.ObjectType.YOU)[
-            0
-        ]  # returns [BABA, IS, YOU]
-        rule_objs = rule_st_is_you.GetObjects()
-
-        rule_positions_cand = [
-            env.game.GetMap().GetPositions(rule_obj.GetTypes()[0])
-            for rule_obj in rule_objs
-        ]
-
-        if len(rule_positions_cand[-1]) > 1:
-            return None, None
-
-        # check left to right
-        you_pos = rule_positions_cand[-1][0]
-        is_pos = (you_pos[0] - 1, you_pos[1])
-
-        if is_pos in rule_positions_cand[1]:
-            obj_pos = (is_pos[0] - 1, is_pos[1])
-            if obj_pos in rule_positions_cand[0]:
-                return [obj_pos, is_pos, you_pos], pyBaba.RuleDirection.HORIZONTAL
-
-        # check top to bottom
-        is_pos = (you_pos[0], you_pos[1] - 1)
-
-        if is_pos in rule_positions_cand[1]:
-            obj_pos = (is_pos[0], is_pos[1] - 1)
-            if obj_pos in rule_positions_cand[0]:
-                return [obj_pos, is_pos, you_pos], pyBaba.RuleDirection.VERTICAL
-
-        return None, None
 
     def search(self, env, g_score, threshold, optimal_moves, visited):
         h = self.heuristic(env)
@@ -169,7 +144,9 @@ class IDAStarAgent:
         for action in env.action_space:
             if self.can_move(env, action):
                 prev = env.get_obs()
-                curr_obs, _, done, _ = env.env.step(action)
+                prev_game = env.copy()
+
+                curr_obs, _, done, _ = env.step(action)
 
                 # check in case the agent didn't move because it's blocked
                 is_moved = (prev != curr_obs).any()
@@ -189,21 +166,22 @@ class IDAStarAgent:
 
                     # lose
                     else:
+                        print("lost")
                         return np.inf
 
-                # game_state = self.get_env_game_state(env)
                 state = tuple(curr_obs.reshape(-1).tolist())
 
                 if state not in visited:
                     visited.add(state)
                     optimal_moves.append(action)
 
-                    # env.render()
+                    env.render()
 
                     temp = self.search(
                         env, g_score + 1, threshold, optimal_moves, visited
                     )
 
+                    # found
                     if temp == -1:
                         return temp
 
@@ -213,29 +191,10 @@ class IDAStarAgent:
                     optimal_moves.pop()
 
                 if is_moved:
-                    # backtrack
-
-                    back_action = self.get_back_action(action)
-                    env.step(back_action)
+                    env.set_game(prev_game)
+                    env.render()
 
         return min_cost
-
-    def get_back_action(self, action: pyBaba.Direction):
-        if action == pyBaba.Direction.UP:
-            return pyBaba.Direction.DOWN
-
-        elif action == pyBaba.Direction.DOWN:
-            return pyBaba.Direction.UP
-
-        elif action == pyBaba.Direction.LEFT:
-            return pyBaba.Direction.RIGHT
-
-        elif action == pyBaba.Direction.RIGHT:
-            return pyBaba.Direction.LEFT
-
-        else:
-            print("Unrecognized action during backtrack!")
-            exit(-1)
 
     def step(self, env: gym.Env):
         action = self.optimal_moves.pop(0)
@@ -257,7 +216,6 @@ class IDAStarAgent:
         game_map = env.game.GetMap()
 
         for win_rule in win_rules:
-
             win_rule_type = win_rule.GetObjects()[0].GetTypes()[0]
 
             win_positions.extend(game_map.GetPositions(convert(win_rule_type)))
@@ -266,7 +224,8 @@ class IDAStarAgent:
 
 
 if __name__ == "__main__":
-    register_baba_env(env_name, env_path, enable_render=False)
+    register_baba_env(env_name, env_path, enable_render=True)
+
     env = gym.make(env_name)
     env.reset()
 
@@ -274,11 +233,14 @@ if __name__ == "__main__":
     done = False
     agent = IDAStarAgent()
 
+    # TODO: get immovable objs every time creating a new rule
+
+    # solve
     start_time = time.time()
     agent.simulate(env)
     print(f"Total simulation time: {time.time() - start_time}s")
 
     while not done:
         done = agent.step(env)
-        # env.render()
+        env.render()
         sleep(0.2)
