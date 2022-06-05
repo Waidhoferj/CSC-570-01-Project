@@ -242,7 +242,8 @@ class Agent:
 if __name__ == '__main__':
     env_name = "baba_is_you-v1"
     env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
-    env_template = register_baba_env(env_name, path=env_path, enable_render=True)
+    levels = [f"levels/out/{i}.txt" for i in range(50)]
+    env_template = register_baba_env(env_name, enable_render=True, env_class_str="ProgressiveTrainingEnv", levels=levels)
     env = gym.make(env_name)
     env.reset()
     flattened_input_shape = (np.prod(env.observation_space.shape),)
@@ -255,7 +256,7 @@ if __name__ == '__main__':
 
     best_score = env.reward_range[0]
     score_history = []
-    load_checkpoint = True
+    load_checkpoint = False
 
     if load_checkpoint:
         agent.load_models()
@@ -269,7 +270,8 @@ if __name__ == '__main__':
             action = np.argmax(action)
             next_obs, reward, done, info = env.step(action)
             next_obs = next_obs.flatten()
-            env.render()
+            if env.enable_render:
+                env.render()
             score += reward
             agent.remember(observation, action, reward, next_obs, done)
             if not load_checkpoint:
@@ -283,7 +285,7 @@ if __name__ == '__main__':
             if not load_checkpoint:
                 agent.save_models()
 
-        print('episode ', i+1, 'score %.1f' % score, 'avg_score %.1f' % avg_score)
+        print('episode ', i+1, 'score %.1f' % score, 'avg_score %.1f' % env.avg_score())
 
     
 

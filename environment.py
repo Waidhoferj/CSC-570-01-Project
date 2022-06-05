@@ -10,12 +10,14 @@ import rendering
 from gym import spaces
 import itertools
 
+from nlp_heuristic import get_features, get_property_positions
+
 # Registration check
 registered_envs = set()
 
 
 def register_baba_env(
-    name: str, path: str, enable_render=True, max_episode_steps=200, user_controls=False
+    name: str, path: str, enable_render=True, max_episode_steps=200, user_controls=False, extra_features=None
 ):
     if name not in registered_envs:
         registered_envs.add(name)
@@ -28,6 +30,7 @@ def register_baba_env(
                 "path": path,
                 "enable_render": enable_render,
                 "user_controls": user_controls,
+                "extra_features": extra_features,
             },
         )
 
@@ -35,12 +38,12 @@ def register_baba_env(
 class BabaEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"]}
 
-    def __init__(self, path: str = "", enable_render=True, user_controls=False):
+    def __init__(self, path: str = "", enable_render=True, user_controls=False, extra_features=None):
         super(BabaEnv, self).__init__()
         self.path = path
         self.game = pyBaba.Game(self.path)
         self.enable_render = enable_render
-
+        self.extra_features = extra_features
         if enable_render:
             self.renderer = rendering.Renderer(self.game)
 
@@ -115,6 +118,27 @@ class BabaEnv(gym.Env):
             reward = -0.5
 
         return self.get_obs(), reward, self.done, {}
+    
+    def solved_step(self, action, end_filepath='levels/out/x_end.txt'):
+        """ special step function for solution agent """
+        action = (
+            action if type(action) == pyBaba.Direction else self.action_space[action]
+        )
+        self.game.MovePlayer(action)
+
+        result = self.game.GetPlayState()
+
+        if result == pyBaba.PlayState.LOST:
+            self.done = True
+            reward = -100
+        elif result == pyBaba.PlayState.WON:
+            self.done = True
+            reward = 200
+            self.game.GetMap().Write(end_filepath)
+        else:
+            reward = -0.5
+
+        return self.get_obs(), reward, self.done, {}
 
     def render(self, mode="human", close=False):
         if not self.enable_render:
@@ -131,9 +155,27 @@ class BabaEnv(gym.Env):
         self.game = game
 
     def get_obs(self):
-        return np.array(
+        game_tensor = np.array(
             pyBaba.Preprocess.StateToTensor(self.game), dtype=np.float32
         ).reshape(-1, self.game.GetMap().GetHeight(), self.game.GetMap().GetWidth())
+        #print('game', game_tensor.shape)
+        if self.extra_features is None:
+           return game_tensor
+        else:
+            tmp = []
+            if 'WIN' in self.extra_features:
+                tmp.append(get_features(self))
+                #print('WIN', tmp[0].shape)
+            if 'PROPT' in self.extra_features:
+                tmp.append(get_property_positions(self))
+                #print('PROPT', tmp[0].shape)
+            if len(tmp) > 1:
+                #print(tmp[0].shape, tmp[1].shape)
+                tmp = np.concatenate((tmp[0], tmp[1]), axis=0)
+                #print(tmp.shape)
+                return np.concatenate((game_tensor, tmp), axis=0)
+            else:
+                return np.concatenate((game_tensor, tmp[0]), axis=0)
 
     def get_immovable_rule_objs(self):
         # get rules that are on the corders
