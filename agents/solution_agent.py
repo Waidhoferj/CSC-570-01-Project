@@ -14,9 +14,6 @@ import numpy as np
 import gym
 import random
 
-level = 10 # The chosen level
-ext = ".txt"
-
 baba_dir_dict = {
     "U": pyBaba.Direction.UP,
     "R": pyBaba.Direction.RIGHT,
@@ -25,7 +22,7 @@ baba_dir_dict = {
 }
 
 class SolutionAgent:
-    def step(self, env: gym.Env, action) -> bool:
+    def step(self, env: gym.Env, action, level=0) -> bool:
         """
         Makes a move in the environment
         Args:
@@ -35,8 +32,11 @@ class SolutionAgent:
             Whether the environment is at a final state
         """
         
+        if action.capitalize() not in ('U', 'R', 'D', 'L'):
+            return False
+
         try:
-            _, _, done, _ = env.step(baba_dir_dict[action])
+            _, _, done, _ = env.solved_step(baba_dir_dict[action.capitalize()], f"levels/out/{level}_end.txt")
         except Exception as e:
             print(f"Error {e} -- Could not complete agent task")
             sys.exit(-1)
@@ -45,6 +45,11 @@ class SolutionAgent:
 if __name__ == "__main__":
     print(f"Running 'solution_agent.py'\n--------------------")
     
+    level = 4 # The chosen level
+    if len(sys.argv) > 1: # The user can specify a level in arguments
+        level = sys.argv[-1]
+    ext = ".txt"
+
     solution_file = f"levels/out/{level}_sol{ext}"
     level_file = f"levels/out/{level}{ext}"
 
@@ -67,7 +72,7 @@ if __name__ == "__main__":
     for move in solution:
         if done:
             break
-        agent.step(env, move)
+        agent.step(env, move, level)
         env.render()
-        sleep(0.2)
+        sleep(0.1)
         
