@@ -53,10 +53,35 @@ def calculate_rule_variability(start_input, end_input) -> int:
     # print(rules_start, rules_end)
     return (set(rules_start) | set(rules_end)) - (set(rules_start) & set(rules_end)) # find number of rules that are different between start and end
 
-def calculate_difficulty(input) -> int:
+def calculate_difficulty(level: int) -> int:
     """ Returns a value that defines the difficulty of the game """
 
-    return 0
+    start_level_filename = f'levels/out/{level}.txt'
+    end_level_filename = f'levels/out/{level}_end.txt'
+
+    if os.path.isfile(end_level_filename) is False:
+        print(f"No generated end file for level {level}.")
+        return -1
+
+    start_level_arr = levelfile_to_array(start_level_filename)[1:]
+    end_level_arr = levelfile_to_array(end_level_filename)[1:]
+
+    # print(start_level_arr, end_level_arr) # DEBUG: print out level arrays
+
+    changed_rules = calculate_rule_variability(start_level_arr, end_level_arr)
+    # print(f"{len(changed_rules)} rules were changed: {changed_rules}")
+
+    congestion = calculate_congestion(start_level_arr)
+    # print(f"{congestion} is the congestion level of the level.")
+
+    # difficulty thresholds:
+    # < 33 = EASY
+    # < 66 = MEDIUM
+    # ELSE = HARD
+    difficulty_score = (len(changed_rules) * 10 + congestion)
+    print(f"difficulty score for level {level} is {difficulty_score}")
+
+    return difficulty_score
 
 def levelfile_to_array(filepath) -> list:
 
@@ -76,26 +101,35 @@ def levelfile_to_array(filepath) -> list:
 if __name__ == "__main__":
     print("Running Program: 'level_difficulty_calc.py'\n--------------------")
 
-    level : int = 223
-    start_level_filename = f'levels/out/{level}.txt'
-    end_level_filename = f'levels/out/{level}_end.txt'
+    # DEBUG: run only on level
+    # if len(sys.argv) > 1:
+    #     level = int(sys.argv[-1])
+    # else:
+    #     level = 0
 
-    start_level_arr = levelfile_to_array(start_level_filename)[1:]
-    end_level_arr = levelfile_to_array(end_level_filename)[1:]
+    easy_levels = []
+    medium_levels = []
+    hard_levels = []
 
-    # print(start_level_arr, end_level_arr) # DEBUG: print out level arrays
+    for i in range(225):
+        difficulty = calculate_difficulty(i)
+        if difficulty == -1: # no end file generated
+            continue
+        elif difficulty < 30:
+            easy_levels.append(i)
+        elif difficulty < 60:
+            medium_levels.append(i)
+        else:
+            hard_levels.append(i)
 
-    changed_rules = calculate_rule_variability(start_level_arr, end_level_arr)
-    print(f"{len(changed_rules)} rules were changed: {changed_rules}")
-
-    congestion = calculate_congestion(start_level_arr)
-    print(f"{congestion} is the congestion level of the level.")
-
-    # difficulty thresholds:
-    # < 33 = EASY
-    # < 66 = MEDIUM
-    # ELSE = HARD
-    difficulty_score = (len(changed_rules) * 10 + congestion)
-    print(f"difficulty score is {difficulty_score}")
-
+    with open(f"levels/easy_levels.txt", 'w') as level_file:
+        for l in easy_levels:
+            level_file.write(f"{l} ")
+    with open(f"levels/medium_levels.txt", 'w') as level_file:
+        for l in medium_levels:
+            level_file.write(f"{l} ")
+    with open(f"levels/hard_levels.txt", 'w') as level_file:
+        for l in hard_levels:
+            level_file.write(f"{l} ")
+    
     sys.exit(0)
