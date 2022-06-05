@@ -110,6 +110,27 @@ class BabaEnv(gym.Env):
             reward = -0.5
 
         return self.get_obs(), reward, self.done, {}
+    
+    def solved_step(self, action, end_filepath='levels/out/x_end.txt'):
+        """ special step function for solution agent """
+        action = (
+            action if type(action) == pyBaba.Direction else self.action_space[action]
+        )
+        self.game.MovePlayer(action)
+
+        result = self.game.GetPlayState()
+
+        if result == pyBaba.PlayState.LOST:
+            self.done = True
+            reward = -100
+        elif result == pyBaba.PlayState.WON:
+            self.done = True
+            reward = 200
+            self.game.GetMap().Write(end_filepath)
+        else:
+            reward = -0.5
+
+        return self.get_obs(), reward, self.done, {}
 
     def render(self, mode="human", close=False):
         if not self.enable_render:
