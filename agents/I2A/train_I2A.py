@@ -15,6 +15,12 @@ from common.actor_critic import ActorCritic, RolloutStorage
 from common.logger import Logger
 from common.myTimer import myTimer
 from environment import register_baba_env
+from utils import train_test_levels
+
+train_data, _ = train_test_levels()
+for i,level in enumerate(train_data):
+        env_name = f"baba-babaisyou{i}-v0"
+        register_baba_env(env_name, path=level, enable_render=False, env_class_str="PropertyBasedEnv")
 
 logger = Logger()
 timer = myTimer()
@@ -25,9 +31,9 @@ num_envs = 32
 
 logger = Logger()
 
-env_name = "baba-babaisyou-v0"
+# env_name = "baba-babaisyou-v0"
 env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
-register_baba_env(env_name, levels=[f"levels/out/{i}.txt" for i in range(100)], env_class_str="ProgressiveTrainingEnv", enable_render=False)
+
 
 
 def make_cuda(input):
@@ -36,36 +42,32 @@ def make_cuda(input):
     return input
 
 
-def make_env():
-    def _thunk():
-        env = gym.make(env_name)
-        return env
-
-    return _thunk
 
 
-if __name__ == "__main__":  # important for windows systems if subprocesses are run
-    envs = [make_env() for i in range(num_envs)]
+
+def train(env_name:str,actor_critic, optimizer, rollout,
+    gamma = 0.99,
+    entropy_coef = 0.01,
+    value_loss_coef = 0.5,
+    max_grad_norm = 0.5,
+    num_steps = 10,
+    num_frames = int(1e6)):
+
+    def make_env():
+        def _thunk():
+            env = gym.make(env_name)
+            return env
+        return _thunk
+
+    envs = [make_env() for _ in range(num_envs)]
     envs = SubprocVecEnv(envs)
 
     state_shape = envs.observation_space.shape
-    num_actions = len(envs.action_space)  # .n
 
     # a2c hyperparams:
-    gamma = 0.99
-    entropy_coef = 0.01
-    value_loss_coef = 0.5
-    max_grad_norm = 0.5
-    num_steps = 10
-    num_frames = int(1e6)
+    
 
     # Init a2c and rmsprop
-    actor_critic = ActorCritic(state_shape, num_actions)
-    optimizer = optim.Adam(actor_critic.parameters())
-
-    actor_critic = make_cuda(actor_critic)
-
-    rollout = RolloutStorage(num_steps, num_envs, state_shape)
 
     if USE_CUDA:
         rollout.cuda()
@@ -168,3 +170,39 @@ if __name__ == "__main__":  # important for windows systems if subprocesses are 
     logger.log_state_dict(
         optimizer.state_dict(), "Data/actor_critic_optimizer_BABAISYOU"
     )
+
+if __name__ == "__main__":
+    use_weights = False
+    gamma = 0.99
+    entropy_coef = 0.01
+    value_loss_coef = 0.5
+    max_grad_norm = 0.5
+    num_steps = 10
+    num_frames = 100
+    num_envs = 32
+    num_actions = 4
+    observation_space = (18,30,30)
+    actor_critic = ActorCritic(observation_space, num_actions)
+    ac_weights = "Data/actor_critic_BABAISYOU"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    if use_weights and os.path.exists(ac_weights):
+        actor_critic.load_state_dict(
+        torch.load(ac_weights)
+    )
+    optimizer = optim.Adam(actor_critic.parameters())
+
+    actor_critic = make_cuda(actor_critic)
+
+    rollout = RolloutStorage(num_steps, num_envs, observation_space)
+
+    for i,level in enumerate(train_data):
+        print(f"Training on level {i+1} of {len(train_data)}")
+        env_name = f"baba-babaisyou{i}-v0"
+        train(env_name, actor_critic, optimizer, rollout,
+        gamma =gamma,
+    entropy_coef =entropy_coef,
+    value_loss_coef =value_loss_coef,
+    max_grad_norm =max_grad_norm,
+    num_steps = num_steps,
+    num_frames = num_frames)

@@ -273,3 +273,17 @@ def get_reverse_action(action: pyBaba.Direction):
     else:
         print("Unrecognized action during backtrack!")
         exit(-1)
+
+def train_test_levels(train_proportion=0.3):
+    """
+    Loads train and test level paths
+    """
+    train = []
+    test = []
+    for difficulty in ["easy", "medium", "hard"]:
+        with open(f"levels/{difficulty}_levels.txt") as f:
+            levels = [f"levels/out/{level}.txt"for level in f.read().split()]
+            split = int(len(levels) * train_proportion)
+            train.extend(levels[:split])
+            test.extend(levels[split:])
+    return train,test
