@@ -4,7 +4,7 @@ import gym
 from gym.utils import seeding
 from gym.envs.registration import register
 import numpy as np
-
+    
 import pyBaba
 import pygame
 import rendering
