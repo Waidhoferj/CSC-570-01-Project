@@ -1,6 +1,7 @@
 # https://github.com/higgsfield/Imagination-Augmented-Agents/blob/master/3.environment-model.ipynb
 # https://github.com/Olloxan/Pytorch-A2C
 
+import json
 import numpy as np
 from time import sleep
 import os
@@ -82,5 +83,8 @@ if __name__ == "__main__":
 
         history = run_I2A(actor_critic, env)
         level_data[test] = history
+    
+    with open("Results/a2c_results.json", "w") as f:
+            json.dump(level_data, f)
 
     
