@@ -1,4 +1,14 @@
-# Baba Is You Agent
+# Baba Is Smart
+
+A model zoo of level-solving agents:
+
+- A\*
+- IDA\*
+- IDAQ\*
+- Soft Actor Critic
+- I2A
+
+We also provide utilites for convering between the Keke Competition and the `baba-is-auto` formats.
 
 ## Getting started
 
