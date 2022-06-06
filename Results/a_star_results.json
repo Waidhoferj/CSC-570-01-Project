@@ -1,0 +1,592 @@
+{
+    "levels/out/10.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/19.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/22.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/25.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/28.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/33.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/34.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/35.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/37.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/42.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/44.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/62.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/64.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/66.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/71.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/73.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/1.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/5.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/6.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/13.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/16.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/21.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/38.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/43.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/48.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/53.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/54.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/56.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/65.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/70.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/3.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/46.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/55.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/61.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/77.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/82.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/88.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/89.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/95.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/96.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/97.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/98.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/99.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/100.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/101.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/102.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/106.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/109.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/112.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/118.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/119.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/120.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/124.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/125.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/128.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/130.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/132.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/133.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/137.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/138.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/142.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/143.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/167.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/194.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/204.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/207.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/208.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/212.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/215.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/217.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/221.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/222.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/223.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/75.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/79.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/85.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/90.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/94.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/104.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/105.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/107.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/108.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/111.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/116.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/121.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/123.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/135.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/146.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/153.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/156.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/158.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/161.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/165.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/166.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/173.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/180.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/181.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/190.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/193.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/200.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/205.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/206.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/209.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/211.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/218.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/219.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/224.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/110.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/129.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/131.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/134.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/144.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/145.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/171.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/176.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/179.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/192.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    },
+    "levels/out/196.txt": {
+        "score": 0,
+        "steps": 0,
+        "won": false
+    }
+}

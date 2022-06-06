@@ -15,6 +15,7 @@ from common.actor_critic import ActorCritic, RolloutStorage
 from common.logger import Logger
 from common.myTimer import myTimer
 from environment import register_baba_env
+from utils import train_test_levels
 
 logger = Logger()
 timer = myTimer()
@@ -27,7 +28,8 @@ logger = Logger()
 
 env_name = "baba-babaisyou-v0"
 env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
-register_baba_env(env_name, levels=[f"levels/out/{i}.txt" for i in range(100)], env_class_str="ProgressiveTrainingEnv", enable_render=False)
+levels, _ = train_test_levels()
+register_baba_env(env_name, levels=levels, env_class_str="ProgressiveTrainingEnv", enable_render=False)
 
 
 def make_cuda(input):

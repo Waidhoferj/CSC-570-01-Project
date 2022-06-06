@@ -1,7 +1,10 @@
+import json
 import os
 import random
 import sys
 from time import sleep
+
+from utils import train_test_levels
 
 env_name = "baba-volcano-v0"
 env_path = os.path.join("baba-is-auto", "Resources", "Maps", "volcano.txt")
@@ -133,8 +136,8 @@ class AStarAgent:
     def step(self, env: gym.Env):
         action = self.best_solution[1].pop(0)
         print(action)
-        _, _, done, _ = env.step(action)
-        return done
+        _, reward, done, _ = env.step(action)
+        return reward, done
 
     def get_your_positions(self, env: gym.Env) -> List[np.array]:
         positions = env.game.GetMap().GetPositions(env.game.GetPlayerIcon())
@@ -164,19 +167,32 @@ class AStarAgent:
 
 
 if __name__ == "__main__":
-    register_baba_env(env_name, env_path)
-    env = gym.make(env_name)
-    env.reset()
-    # state = env.reset().reshape(1, -1, 9, 11)
-    moves = 40
-    done = False
-    agent = AStarAgent()
+    train, test = train_test_levels()
+    levels =[*train,*test]
+    level_performance = {}
+    for i,level in enumerate(levels):
+        env_name = f"baba-babaisyou{i}-v0"
+        register_baba_env(env_name, path=level, max_episode_steps=250)
+        env = gym.make(env_name)
+        env.reset()
+        agent = AStarAgent()
 
-    start_time = time.time()
-    agent.simulate(env)
-    print(f"Total simulation time: {time.time() - start_time}s")
-
-    while not done:
-        done = agent.step(env)
-        env.render()
-        sleep(0.2)
+        start_time = time.time()
+        level_performance[level] = {"score": 0, "steps": 0, "won": False}
+        # try:
+        agent.simulate(env)
+        score = 0
+        steps = 0
+        reward = 0
+        done = False
+        while not done:
+            reward, done = agent.step(env)
+            score += reward
+            steps +=1
+            env.render()
+            sleep(0.2)
+        level_performance[level] = {"score": score, "steps": steps, "won": reward > 0}
+        # except:
+        #     continue
+    with open(f"{os.path.split(__file__)[0]}/../Results/a_star_results.json", "w") as f:
+        json.dump(level_performance,f)

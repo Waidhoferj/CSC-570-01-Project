@@ -18,6 +18,7 @@ from typing import List
 
 # from tensorboardX import SummaryWriter
 from environment import register_baba_env
+from utils import train_test_levels
 
 
 class IDAQStarAgent:
@@ -238,8 +239,8 @@ class IDAQStarAgent:
     def step(self, env: gym.Env):
         action = self.optimal_moves.pop(0)
         print(action)
-        _, _, done, _ = env.step(action)
-        return done
+        _, reward, done, _ = env.step(action)
+        return reward, done
 
     def get_your_positions(self, env: gym.Env) -> List[np.array]:
         positions = env.game.GetMap().GetPositions(env.game.GetPlayerIcon())
@@ -288,7 +289,7 @@ class Network(nn.Module):
         super(Network, self).__init__()
 
         self.conv1 = nn.Conv2d(
-            pyBaba.Preprocess.TENSOR_DIM, 64, 3, padding=1, bias=False
+            18, 64, 3, padding=1, bias=False
         )
         self.bn1 = nn.BatchNorm2d(64)
         self.conv2 = nn.Conv2d(64, 64, 3, padding=1, bias=False)
@@ -298,9 +299,10 @@ class Network(nn.Module):
         self.conv4 = nn.Conv2d(64, 1, 1, padding=0, bias=False)
         self.bn4 = nn.BatchNorm2d(1)
 
-        self.fc = nn.Linear(594, 4)
+        self.fc = nn.Linear(900, 4)
 
     def forward(self, x):
+        x = x.float()
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
@@ -335,7 +337,7 @@ class DQN:
         else:
             return random.choice(env.action_space)
 
-    def train(self):
+    def train(self, env):
         # writer = SummaryWriter()
 
         global_step = 0
@@ -344,7 +346,7 @@ class DQN:
         for e in range(10000):
             score = 0
 
-            state = env.reset().reshape(1, -1, 18, 33)
+            state = np.expand_dims(env.reset(),axis=0)
             state = torch.tensor(state).to(device)
 
             step = 0
@@ -356,7 +358,7 @@ class DQN:
                 # env.render()
 
                 next_state, reward, done, _ = env.step(action)
-                next_state = next_state.reshape(1, -1, 18, 33)
+                next_state = np.expand_dims(next_state, axis=0)
                 next_state = torch.tensor(next_state).to(device)
 
                 self.memory.push(state, action, next_state, reward)
@@ -440,42 +442,57 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
-
+    train, test = train_test_levels()
     # Train DQN
     net = Network().to(device)
     target_net = Network().to(device)
-
-    env_name = "baba-volcano-v0"
-    env_path = os.path.join("baba-is-auto", "Resources", "Maps", "volcano.txt")
-
-    # pretrained_model exists
-    # then load
-    pretrained_model_path = "dqn_agent.bin"
-    if os.path.exists(pretrained_model_path):
+    dqn = DQN(net, target_net)
+    should_train = True
+    pretrained_model_path = "weights/dqn_agent.pth"
+    if not should_train and  os.path.exists(pretrained_model_path):
         net.load_state_dict(pretrained_model_path)
         net.eval()
-
-        register_baba_env(env_name, env_path, enable_render=True)
-        env = gym.make(env_name)
-
-    else:
-        # train
-        register_baba_env(env_name, env_path, enable_render=False)
-        env = gym.make(env_name)
-
-        dqn = DQN(net, target_net)
-        dqn.train()
-        pass
+    if should_train:
+        print("Training")
+        for i,level in enumerate(train):
+            print(f"Training on level {i}")
+            score_history = []
+            env_name = f"baba-train{i}-v0"
+            env_template = register_baba_env(env_name, path=level, enable_render=False, env_class_str="PropertyBasedEnv")
+            env = gym.make(env_name)
+            for i in range(5):
+                dqn.train(env)
+            torch.save(net.state_dict(), pretrained_model_path)
 
     # Used trained DQN as a heuristic for IDA*
-    # done = False
-    # agent = IDAQStarAgent(q_func=net)
+    done = False
+    level_performance = {}
+    agent = IDAQStarAgent(q_func=net)
 
-    # start_time = time.time()
-    # agent.simulate(env)
-    # print(f"Total simulation time: {time.time() - start_time}s")
+    print("TEST")
+    for i,level in enumerate(test):
+        env_name = f"test-test{i}-v0"
+        env_template = register_baba_env(env_name, path=level, enable_render=True, env_class_str="PropertyBasedEnv")
+        env = gym.make(env_name)
+        observation = (env.reset()).flatten()
+        reward = 0
+        score = 0
+        steps = 0
+        done = False
+        agent.simulate(env)
+        while not done:
+            reward, done = agent.step(env)
+            score += reward
+            steps +=1
+        level_performance[level] = {"score": score, "steps": steps, "won": reward > 0}
 
-    # while not done:
-    #     done = agent.step(env)
-    #     env.render()
-    #     sleep(0.2)
+        print(level_performance[level])
+
+    start_time = time.time()
+    
+    print(f"Total simulation time: {time.time() - start_time}s")
+
+    while not done:
+        
+        env.render()
+        sleep(0.2)

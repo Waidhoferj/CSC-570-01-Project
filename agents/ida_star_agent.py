@@ -10,7 +10,7 @@ env_path = os.path.join("levels", "out", "3.txt")
 
 from environment import register_baba_env
 from rule_utils import create_win_rule
-from utils import is_breaking_rule
+from utils import is_breaking_rule, train_test_levels
 
 import pdb
 import pyBaba
@@ -19,6 +19,7 @@ import gym
 import random
 from typing import List
 import time
+import json
 
 
 class IDAStarAgent:
@@ -199,8 +200,8 @@ class IDAStarAgent:
     def step(self, env: gym.Env):
         action = self.optimal_moves.pop(0)
         print(action)
-        _, _, done, _ = env.step(action)
-        return done
+        _, r, done, _ = env.step(action)
+        return r, done
 
     def get_your_positions(self, env: gym.Env) -> List[np.array]:
         positions = env.game.GetMap().GetPositions(env.game.GetPlayerIcon())
@@ -224,23 +225,33 @@ class IDAStarAgent:
 
 
 if __name__ == "__main__":
-    register_baba_env(env_name, env_path, enable_render=True)
+    train, test = train_test_levels()
+    levels =[*train,*test]
+    level_performance = {}
+    for i,level in enumerate(levels):
+        env_name = f"baba-babaisyou{i}-v0"
+        register_baba_env(env_name, path=level, max_episode_steps=250)
+        env = gym.make(env_name)
+        env.reset()
+        agent = IDAStarAgent()
 
-    env = gym.make(env_name)
-    env.reset()
+        start_time = time.time()
+        level_performance[level] = {"score": 0, "steps": 0, "won": False}
+        try:
+            agent.simulate(env)
+            score = 0
+            steps = 0
+            reward = 0
+            done = False
+            while not done:
+                reward, done = agent.step(env)
+                score += reward
+                steps +=1
+                env.render()
+                sleep(0.2)
+            level_performance[level] = {"score": score, "steps": steps, "won": reward > 0}
+        except:
+            continue
+    with open(f"{os.path.split(__file__)[0]}/../Results/ida_star_results.json", "w") as f:
+        json.dump(level_performance,f)
 
-    moves = 40
-    done = False
-    agent = IDAStarAgent()
-
-    # TODO: get immovable objs every time creating a new rule
-
-    # solve
-    start_time = time.time()
-    agent.simulate(env)
-    print(f"Total simulation time: {time.time() - start_time}s")
-
-    while not done:
-        done = agent.step(env)
-        env.render()
-        sleep(0.2)

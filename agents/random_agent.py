@@ -1,6 +1,10 @@
+import json
+import os
 import random
 import sys
 from time import sleep
+
+from utils import train_test_levels
 
 env_name = "test-map-v1"
 from environment import register_baba_env
@@ -23,20 +27,36 @@ class RandomAgent:
             Whether the environment is at a final state
         """
         action = random.choice(env.action_space)
-        _, _, done, _ = env.step(action)
-        return done
+        _, reward, done, _ = env.step(action)
+        return reward,done
 
 
 if __name__ == "__main__":
-    env_template = register_baba_env(env_name, path=f"levels/out/0.txt")
-    env = gym.make(env_name)
-    env.reset()
-    moves = 40
-    done = False
-    agent = RandomAgent()
-    for i in range(moves):
-        if done:
-            break
-        agent.step(env)
-        env.render()
-        sleep(0.2)
+    random.seed(1)
+    train, test = train_test_levels()
+    levels =[*train,*test]
+    
+    level_performance = {}
+    for i,level in enumerate(levels):
+        env_name = f"baba-babaisyou{i}-v0"
+        register_baba_env(env_name, path=level, max_episode_steps=250)
+        env = gym.make(env_name)
+        env.reset()
+        agent = RandomAgent()
+
+        level_performance[level] = {"score": 0, "steps": 0, "won": False}
+        try:
+            score = 0
+            steps = 0
+            reward = 0
+            done = False
+            while not done:
+                reward, done = agent.step(env)
+                score += reward
+                steps +=1
+                env.render()
+            level_performance[level] = {"score": score, "steps": steps, "won": reward > 0}
+        except:
+            continue
+    with open(f"{os.path.split(__file__)[0]}/../Results/random_results.json", "w") as f:
+        json.dump(level_performance,f)

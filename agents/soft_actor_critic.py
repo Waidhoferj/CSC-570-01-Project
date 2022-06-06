@@ -1,5 +1,6 @@
 # Code adapted from: https://github.com/philtabor/Youtube-Code-Repository/tree/master/ReinforcementLearning/PolicyGradient/SAC/tf2
 
+import json
 import numpy as np
 import os
 import tensorflow as tf
@@ -10,6 +11,8 @@ from tensorflow.keras.optimizers import Adam
 from environment import register_baba_env
 import gym
 from gym import wrappers
+
+from utils import train_test_levels
 
 
 chkpt_dir = "checkpoints"
@@ -241,30 +244,69 @@ class Agent:
 
 if __name__ == '__main__':
     env_name = "baba_is_you-v1"
-    env_path = os.path.join("baba-is-auto", "Resources", "Maps", "baba_is_you.txt")
-    levels = [f"levels/out/{i}.txt" for i in range(50)]
-    env_template = register_baba_env(env_name, enable_render=True, env_class_str="ProgressiveTrainingEnv", levels=levels)
+    train, test = train_test_levels()
+    env_template = register_baba_env(env_name, path=train[0], enable_render=False, env_class_str="PropertyBasedEnv")
     env = gym.make(env_name)
     env.reset()
     flattened_input_shape = (np.prod(env.observation_space.shape),)
     agent = Agent(input_dims=flattened_input_shape, env=env,
             n_actions=env.action_size)
     n_games = 100
+    should_train = False
     # uncomment this line and do a mkdir tmp && mkdir tmp/video if you want to
     # record video of the agent playing the game.
     #env = wrappers.Monitor(env, 'tmp/video', video_callable=lambda episode_id: True, force=True)
 
     best_score = env.reward_range[0]
-    score_history = []
-    load_checkpoint = False
-
+    
+    load_checkpoint = True
+    level_scores = {}
     if load_checkpoint:
         agent.load_models()
+    if should_train:
+        print("Train")
+        for i,level in enumerate(train):
+            score_history = []
+            env_name = f"baba-train{i}-v0"
+            env_template = register_baba_env(env_name, path=level, enable_render=False, env_class_str="PropertyBasedEnv")
+            env = gym.make(env_name)
+            for j in range(5):
+                observation = (env.reset()).flatten()
+                done = False
+                score = 0
+                while not done:
+                    action = agent.choose_action(observation)
+                    action = np.argmax(action)
+                    next_obs, reward, done, info = env.step(action)
+                    next_obs = next_obs.flatten()
+                    if env.enable_render:
+                        env.render()
+                    score += reward
+                    agent.remember(observation, action, reward, next_obs, done)
+                    agent.learn()
+                    observation = next_obs
+                score_history.append(score)
+                avg_score = np.mean(score_history[-100:])
+            level_scores[level] = score_history
+            print(f"Training {i} - Score: {score} - Avg: {avg_score}")
+            agent.save_models()
+        with open("soft_actor_critic_train.json", "w") as f:
+            json.dump(level_scores, f)
 
-    for i in range(n_games):
+        if avg_score > best_score:
+            best_score = avg_score
+            agent.save_models()
+    level_performance = {}
+    print("test")
+    for i,level in enumerate(test):
+        env_name = f"test-test{i}-v0"
+        env_template = register_baba_env(env_name, path=level, enable_render=True, env_class_str="PropertyBasedEnv")
+        env = gym.make(env_name)
         observation = (env.reset()).flatten()
-        done = False
+        reward = 0
         score = 0
+        steps = 0
+        done = False
         while not done:
             action = agent.choose_action(observation)
             action = np.argmax(action)
@@ -273,19 +315,15 @@ if __name__ == '__main__':
             if env.enable_render:
                 env.render()
             score += reward
+            steps +=1
             agent.remember(observation, action, reward, next_obs, done)
-            if not load_checkpoint:
-                agent.learn()
             observation = next_obs
-        score_history.append(score)
-        avg_score = np.mean(score_history[-100:])
+        level_performance[level] = {"score": score, "steps": steps, "won": reward > 0}
+        print(f"Running test {i}")
+    with open("Results/soft_actor_critic_results.json", "w") as f:
+            json.dump(level_performance, f)
 
-        if avg_score > best_score:
-            best_score = avg_score
-            if not load_checkpoint:
-                agent.save_models()
-
-        print('episode ', i+1, 'score %.1f' % score, 'avg_score %.1f' % env.avg_score())
+            
 
     
 
